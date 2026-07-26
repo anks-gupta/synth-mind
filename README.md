@@ -131,6 +131,12 @@ QDRANT_API_KEY="your-qdrant-api-key"
 
 # OpenAI API Key
 OPENAI_API_KEY="sk-..."
+
+# AWS S3
+AWS_REGION="ap-south-1"
+AWS_ACCESS_KEY_ID="your-access-key-id"
+AWS_SECRET_ACCESS_KEY="your-secret-access-key"
+AWS_S3_BUCKET_NAME="bucket-name"
 ```
 
 ---
