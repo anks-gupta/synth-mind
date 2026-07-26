@@ -168,4 +168,3 @@ To verify production bundle compilation:
 ```bash
 npm run build
 ```
-*(Passed with 0 compilation errors)*
