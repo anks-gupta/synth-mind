@@ -639,16 +639,16 @@ export function LearningStudio({
                       }`}
                     >
                       {/* Header Row with Badge & Toggle Checkbox */}
-                      <div className="flex items-center justify-between text-xs gap-3">
-                        <div className="flex items-center space-x-3">
-                          <span className={`px-3 py-1 rounded-full font-mono text-[11px] font-extrabold uppercase tracking-wide ${
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2.5">
+                        <div className="flex items-center space-x-3 min-w-0 flex-1">
+                          <span className={`px-3 py-1 rounded-full font-mono text-[11px] font-extrabold uppercase tracking-wide shrink-0 ${
                             isDone
                               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                               : 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/20'
                           }`}>
                             STEP {step.stepNumber.toString().padStart(2, '0')}
                           </span>
-                          <span className={`text-sm font-extrabold ${isDone ? 'text-emerald-300 line-through opacity-85' : 'text-white'}`}>
+                          <span className={`text-sm font-extrabold truncate ${isDone ? 'text-emerald-300 line-through opacity-85' : 'text-white'}`}>
                             {step.topic}
                           </span>
                         </div>
@@ -657,7 +657,7 @@ export function LearningStudio({
                         <button
                           type="button"
                           onClick={() => toggleStepCompletion(step.stepNumber)}
-                          className={`flex items-center space-x-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all border ${
+                          className={`flex items-center justify-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 cursor-pointer self-start sm:self-auto ${
                             isDone
                               ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
                               : 'bg-[#070b12] border-[#334155] text-slate-400 hover:text-slate-200 hover:border-violet-500/50'
@@ -699,10 +699,10 @@ export function LearningStudio({
                               return (
                                 <div
                                   key={i}
-                                  className="p-4 rounded-xl bg-[#070b12] border border-[#1e293b] hover:border-violet-500/50 hover:shadow-md hover:shadow-violet-500/10 flex items-center justify-between gap-3 transition-all group/item"
+                                  className="p-3.5 sm:p-4 rounded-xl bg-[#070b12] border border-[#1e293b] hover:border-violet-500/50 hover:shadow-md hover:shadow-violet-500/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all group/item"
                                 >
                                   <div className="flex items-start space-x-3 min-w-0 flex-1">
-                                    <div className="mt-0.5 p-1.5 rounded-lg bg-[#0f172a] border border-[#1e293b]">
+                                    <div className="mt-0.5 p-1.5 rounded-lg bg-[#0f172a] border border-[#1e293b] shrink-0">
                                       {getSourceIcon(res.type)}
                                     </div>
                                     <div className="min-w-0 flex-1 space-y-1.5">
@@ -711,23 +711,23 @@ export function LearningStudio({
                                       </p>
 
                                       {/* Range Badges */}
-                                      <div className="flex items-center space-x-2 text-[10px]">
+                                      <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
                                         {res.timeRange && (
-                                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-lg bg-rose-500/10 text-rose-300 border border-rose-500/30 font-mono font-semibold">
-                                            <Clock className="w-3 h-3 text-rose-400" />
+                                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-lg bg-rose-500/10 text-rose-300 border border-rose-500/30 font-mono font-semibold whitespace-nowrap shrink-0">
+                                            <Clock className="w-3 h-3 text-rose-400 shrink-0" />
                                             <span>{res.timeRange}</span>
                                           </span>
                                         )}
 
                                         {res.pageRange && (
-                                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 font-mono font-semibold">
-                                            <FileText className="w-3 h-3 text-emerald-400" />
+                                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 font-mono font-semibold whitespace-nowrap shrink-0">
+                                            <FileText className="w-3 h-3 text-emerald-400 shrink-0" />
                                             <span>{res.pageRange}</span>
                                           </span>
                                         )}
 
                                         {isWeb && (
-                                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 font-mono font-semibold truncate max-w-[180px]" title={res.sectionTitle || res.sectionAnchor || 'Web Article'}>
+                                          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 font-mono font-semibold whitespace-nowrap truncate max-w-[180px]" title={res.sectionTitle || res.sectionAnchor || 'Web Article'}>
                                             <Globe className="w-3 h-3 text-cyan-400 shrink-0" />
                                             <span className="truncate">
                                               {res.sectionTitle
@@ -763,7 +763,7 @@ export function LearningStudio({
                                         urlOrPath: res.urlOrPath,
                                       })
                                     }
-                                    className="whitespace-nowrap inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-300 hover:text-violet-100 text-xs font-bold transition-all shadow-sm hover:scale-[1.02] active:scale-95 shrink-0 cursor-pointer"
+                                    className="whitespace-nowrap inline-flex items-center justify-center space-x-1.5 px-3.5 py-2 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-300 hover:text-violet-100 text-xs font-bold transition-all shadow-sm hover:scale-[1.02] active:scale-95 shrink-0 cursor-pointer w-full sm:w-auto"
                                     title={`Inspect Ground Truth Citation: ${res.title}`}
                                   >
                                     <span>

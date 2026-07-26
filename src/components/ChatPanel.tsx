@@ -131,12 +131,14 @@ export function ChatPanel({
 }: ChatPanelProps) {
   const [input, setInput] = useState('');
   const [isConfirmClearOpen, setIsConfirmClearOpen] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to latest message
+  // Auto-scroll to latest message only when a new message is added
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isLoading]);
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages.length]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -194,7 +196,7 @@ export function ChatPanel({
   return (
     <div className="flex-1 flex flex-col h-full min-h-0 bg-[#070b12] relative select-text overflow-hidden">
       {/* Top Context Header Bar */}
-      <div className="h-12 border-b border-[#1e293b] bg-[#0f172a]/60 px-6 flex items-center justify-between text-xs">
+      <div className="h-12 border-b border-[#1e293b] bg-[#0f172a]/60 px-6 flex items-center justify-between text-xs shrink-0">
         <div className="flex items-center space-x-2 text-slate-300 font-semibold">
           <BookOpen className="w-4 h-4 text-violet-400" />
           <span>AI Research Assistant</span>
@@ -215,7 +217,7 @@ export function ChatPanel({
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-6">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0 touch-pan-y overscroll-contain px-4 md:px-8 py-6 space-y-6">
         {/* History loading skeleton */}
         {isLoadingHistory ? (
           <div className="max-w-3xl mx-auto space-y-4 py-4">
@@ -267,26 +269,23 @@ export function ChatPanel({
             return (
               <div
                 key={msg.id}
-                className={`flex items-start space-x-3 max-w-5xl mx-auto w-full animate-in fade-in-0 slide-in-from-bottom-2 duration-150 ${
-                  msg.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-                }`}
+                className={`flex items-start space-x-3 max-w-5xl mx-auto w-full animate-in fade-in-0 slide-in-from-bottom-2 duration-150 ${msg.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+                  }`}
               >
                 <div
-                  className={`w-7.5 h-7.5 rounded-xl flex items-center justify-center shrink-0 shadow-md mt-1 ${
-                    msg.role === 'user'
-                      ? 'bg-gradient-to-br from-violet-500 to-indigo-600 text-white font-bold shadow-violet-500/20'
-                      : 'bg-gradient-to-br from-slate-900 to-[#0f172a] text-violet-400 border border-violet-500/30'
-                  }`}
+                  className={`w-7.5 h-7.5 rounded-xl flex items-center justify-center shrink-0 shadow-md mt-1 ${msg.role === 'user'
+                    ? 'bg-gradient-to-br from-violet-500 to-indigo-600 text-white font-bold shadow-violet-500/20'
+                    : 'bg-gradient-to-br from-slate-900 to-[#0f172a] text-violet-400 border border-violet-500/30'
+                    }`}
                 >
                   {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                 </div>
 
                 <div
-                  className={`p-5 md:p-6 rounded-2xl text-xs md:text-sm leading-relaxed space-y-4 shadow-xl ${
-                    msg.role === 'user'
-                      ? 'bg-gradient-to-br from-[#1e1b4b]/90 to-[#0f172a] text-violet-100 font-medium rounded-tr-none border border-violet-500/30 shadow-violet-500/10 max-w-xl md:max-w-2xl'
-                      : 'bg-[#0f172a]/95 text-slate-200 border border-[#1e293b] rounded-tl-none flex-1 min-w-0 shadow-slate-950/50'
-                  }`}
+                  className={`p-5 md:p-6 rounded-2xl text-xs md:text-sm leading-relaxed space-y-4 shadow-xl ${msg.role === 'user'
+                    ? 'bg-gradient-to-br from-[#1e1b4b]/90 to-[#0f172a] text-violet-100 font-medium rounded-tr-none border border-violet-500/30 shadow-violet-500/10 max-w-xl md:max-w-2xl'
+                    : 'bg-[#0f172a]/95 text-slate-200 border border-[#1e293b] rounded-tl-none flex-1 min-w-0 shadow-slate-950/50'
+                    }`}
                 >
                   {detectedCards.length > 0 ? (
                     <InteractiveFlashcards
@@ -331,9 +330,11 @@ export function ChatPanel({
                         },
                         p: ({ children }) => <p className="mb-3 leading-relaxed text-slate-200 last:mb-0 font-normal">{children}</p>,
                         strong: ({ children }) => <strong className="font-bold text-white tracking-wide">{children}</strong>,
-                        ul: ({ children }) => <ul className="list-disc pl-6 space-y-2.5 my-3 text-slate-200">{children}</ul>,
-                        ol: ({ children }) => <ol className="list-decimal pl-6 space-y-3 my-4 text-slate-200 font-medium">{children}</ol>,
+                        ul: ({ children }) => <ul className="list-disc pl-5 sm:pl-6 space-y-2.5 my-3 text-slate-200">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal pl-5 sm:pl-6 space-y-3 my-4 text-slate-200 font-medium">{children}</ol>,
                         li: ({ children }) => <li className="leading-relaxed text-slate-200 pl-1">{children}</li>,
+                        pre: ({ children }) => <pre className="bg-[#090d16] p-3 rounded-xl border border-[#1e293b] overflow-x-auto max-w-full my-3 text-xs text-slate-200 font-mono">{children}</pre>,
+                        code: ({ children }) => <code className="bg-violet-500/15 text-violet-300 border border-violet-500/30 px-1.5 py-0.5 rounded text-[11px] font-mono break-all">{children}</code>,
                       }}
                     >
                       {processedContent}
@@ -422,12 +423,10 @@ export function ChatPanel({
         )}
 
         {isLoading && <AnimatedRAGLoading />}
-        {/* Scroll anchor */}
-        <div ref={bottomRef} />
       </div>
 
       {/* Bottom Input Floating Glass Dock */}
-      <div className="p-4 md:p-6 bg-gradient-to-t from-[#070b12] via-[#070b12]/95 to-transparent border-t border-[#1e293b]/60">
+      <div className="p-4 md:p-6 bg-gradient-to-t from-[#070b12] via-[#070b12]/95 to-transparent border-t border-[#1e293b]/60 shrink-0">
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto w-full relative">
           <div className="bg-[#0b101d]/90 border border-violet-500/30 focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/20 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-2xl shadow-violet-500/10 backdrop-blur-xl transition-all flex items-center gap-3">
             <textarea

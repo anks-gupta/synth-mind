@@ -14,7 +14,7 @@ export default function SignUpPage() {
         </span>
       </Link>
 
-      <div className="w-full max-w-md flex justify-center">
+      <div className="w-full max-w-[95vw] sm:max-w-md flex justify-center px-2">
         <SignUp
           appearance={{
             elements: {

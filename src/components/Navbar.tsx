@@ -86,172 +86,229 @@ export function Navbar({
 
   return (
     <>
-      <header className="h-16 border-b border-[#1e293b] backdrop-blur-xl bg-[#070b12]/90 px-4 lg:px-6 flex items-center justify-between sticky top-0 z-40 select-none shadow-[0_1px_0_0_rgba(139,92,246,0.12)]">
-        {/* Left: SynthMind Logo & Notebook Dropdown */}
-        <div className="flex items-center space-x-3 min-w-0">
-          <BrandLogo size="md" />
+      <header className="border-b border-[#1e293b] backdrop-blur-xl bg-[#070b12]/95 sticky top-0 z-40 select-none shadow-[0_1px_0_0_rgba(139,92,246,0.12)]">
+        {/* Primary Navbar Row */}
+        <div className="h-16 px-3 sm:px-6 flex items-center justify-between gap-2">
+          {/* Left: SynthMind Logo & Notebook Dropdown */}
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+            <BrandLogo size="md" />
 
-          <div className="h-4 w-px bg-[#1e293b] hidden sm:block" />
+            <div className="h-4 w-px bg-[#1e293b] hidden sm:block shrink-0" />
 
-          {/* Notebook Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-[#0f172a] hover:bg-[#1e293b] border border-[#1e293b] text-slate-200 text-xs font-semibold transition-all cursor-pointer hover:scale-[1.02] active:scale-95"
-            >
-              <span className="truncate max-w-[140px] sm:max-w-[200px]">
-                {activeNotebook?.title || 'Select Workspace'}
-              </span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-            </button>
+            {/* Notebook Dropdown */}
+            <div className="relative shrink-0">
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#0f172a] hover:bg-[#1e293b] border border-[#1e293b] text-slate-200 text-xs font-semibold transition-all cursor-pointer hover:scale-[1.02] active:scale-95"
+              >
+                <span className="truncate max-w-[90px] xs:max-w-[120px] sm:max-w-[180px]">
+                  {activeNotebook?.title || 'Select Workspace'}
+                </span>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              </button>
 
-            {isDropdownOpen && (
-              <div className="absolute top-10 left-0 w-72 rounded-2xl bg-[#0f172a] border border-[#1e293b] shadow-2xl p-2 z-50 animate-in fade-in-0 slide-in-from-top-2 duration-150">
-                <div className="text-[10px] font-bold text-slate-400 px-3 py-1.5 uppercase tracking-wider flex items-center justify-between border-b border-[#1e293b]">
-                  <span>Workspaces</span>
-                  <span className="text-violet-400 font-mono">({notebooks.length})</span>
-                </div>
+              {isDropdownOpen && (
+                <>
+                  {/* Backdrop overlay on mobile */}
+                  <div
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 sm:hidden"
+                    onClick={() => setIsDropdownOpen(false)}
+                  />
 
-                <div className="max-h-60 overflow-y-auto space-y-1 my-1 pr-1">
-                  {notebooks.map((nb) => (
-                    <div
-                      key={nb.id}
-                      className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs cursor-pointer transition-all ${
-                        activeNotebook?.id === nb.id
-                          ? 'bg-[#1e293b] text-violet-300 font-bold border border-violet-500/40 shadow-sm'
-                          : 'text-slate-300 hover:bg-[#1e293b]/60'
-                      }`}
-                      onClick={() => {
-                        onSelectNotebook(nb);
-                        setIsDropdownOpen(false);
-                      }}
-                    >
-                      <div className="truncate pr-2">
-                        <div className="truncate font-semibold">{nb.title}</div>
-                        <div className="text-[10px] text-slate-400 mt-0.5">
-                          {nb._count?.sources || 0} sources
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-1 shrink-0">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsDropdownOpen(false);
-                            setRenamingNotebook(nb);
-                            setEditTitle(nb.title);
-                            setEditDesc(nb.description || '');
-                          }}
-                          className="text-slate-400 hover:text-violet-300 p-1 rounded hover:bg-[#334155] transition-colors cursor-pointer"
-                          title="Rename Notebook"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-
-                        {activeNotebook?.id !== nb.id && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsDropdownOpen(false);
-                              setDeletingNotebook(nb);
-                            }}
-                            className="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-[#334155] transition-colors cursor-pointer"
-                            title="Delete Notebook"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
+                  <div className="fixed inset-x-3 top-16 sm:absolute sm:top-11 sm:left-0 sm:inset-auto w-auto sm:w-80 max-w-[calc(100vw-1.5rem)] rounded-2xl bg-[#0f172a] border border-[#1e293b] shadow-2xl p-3 z-50 animate-in fade-in-0 slide-in-from-top-2 duration-150">
+                    <div className="text-[10px] font-bold text-slate-400 px-3 py-1.5 uppercase tracking-wider flex items-center justify-between border-b border-[#1e293b]">
+                      <span>Workspaces</span>
+                      <span className="text-violet-400 font-mono">({notebooks.length})</span>
                     </div>
-                  ))}
-                </div>
 
-                <div className="pt-1.5 border-t border-[#1e293b]">
-                  <button
-                    onClick={() => {
-                      setIsDropdownOpen(false);
-                      setIsCreateModalOpen(true);
-                    }}
-                    className="w-full flex items-center justify-center space-x-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs transition-all shadow-md shadow-violet-500/25 cursor-pointer hover:scale-[1.01] active:scale-95"
-                  >
-                    <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                    <span>New Workspace</span>
-                  </button>
-                </div>
-              </div>
+                    <div className="max-h-56 sm:max-h-64 overflow-y-auto space-y-1 my-1.5 pr-1">
+                      {notebooks.map((nb) => (
+                        <div
+                          key={nb.id}
+                          className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-xs cursor-pointer transition-all ${activeNotebook?.id === nb.id
+                            ? 'bg-[#1e293b] text-violet-300 font-bold border border-violet-500/40 shadow-sm'
+                            : 'text-slate-300 hover:bg-[#1e293b]/60'
+                            }`}
+                          onClick={() => {
+                            onSelectNotebook(nb);
+                            setIsDropdownOpen(false);
+                          }}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate font-semibold text-slate-100">{nb.title}</div>
+                            <div className="text-[10px] text-slate-400 mt-0.5">
+                              {nb._count?.sources || 0} sources
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-1 shrink-0 ml-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsDropdownOpen(false);
+                                setRenamingNotebook(nb);
+                                setEditTitle(nb.title);
+                                setEditDesc(nb.description || '');
+                              }}
+                              className="text-slate-400 hover:text-violet-300 p-1.5 rounded-lg hover:bg-[#334155] transition-colors cursor-pointer"
+                              title="Rename Notebook"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+
+                            {activeNotebook?.id !== nb.id && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setIsDropdownOpen(false);
+                                  setDeletingNotebook(nb);
+                                }}
+                                className="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-[#334155] transition-colors cursor-pointer"
+                                title="Delete Notebook"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="pt-2 border-t border-[#1e293b]">
+                      <button
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                          setIsCreateModalOpen(true);
+                        }}
+                        className="w-full flex items-center justify-center space-x-1.5 min-h-[44px] px-3 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs transition-all shadow-md shadow-violet-500/25 cursor-pointer active:scale-95"
+                      >
+                        <Plus className="w-4 h-4 stroke-[3]" />
+                        <span>New Workspace</span>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Mobile Knowledge Vault Trigger */}
+            {onToggleMobileSources && (
+              <button
+                onClick={onToggleMobileSources}
+                className="lg:hidden flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs font-bold transition-all cursor-pointer shrink-0"
+                title="Open Knowledge Vault"
+              >
+                <Database className="w-3.5 h-3.5 text-violet-400" />
+                <span className="hidden sm:inline">Vault</span>
+                <span className="px-1.5 py-0.5 rounded-full bg-violet-500/20 text-[10px] text-violet-200 font-mono">
+                  {sourceCount}
+                </span>
+              </button>
             )}
           </div>
 
-          {/* Mobile Knowledge Vault Trigger */}
-          {onToggleMobileSources && (
+          {/* Desktop Mode Switcher (Hidden on Mobile) */}
+          <div className="hidden md:flex items-center space-x-1 bg-[#0f172a] p-1 rounded-2xl border border-[#1e293b]">
             <button
-              onClick={onToggleMobileSources}
-              className="lg:hidden flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs font-bold transition-all cursor-pointer shrink-0"
-              title="Open Knowledge Vault"
-            >
-              <Database className="w-3.5 h-3.5 text-violet-400" />
-              <span className="hidden sm:inline">Vault</span>
-              <span className="px-1.5 py-0.5 rounded-full bg-violet-500/20 text-[10px] text-violet-200 font-mono">
-                {sourceCount}
-              </span>
-            </button>
-          )}
-        </div>
-
-        {/* Center: Mode Switcher Header Tabs */}
-        <div className="flex items-center space-x-1 bg-[#0f172a] p-1 rounded-2xl border border-[#1e293b]">
-          <button
-            onClick={() => onChangeMode('chat')}
-            className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${
-              activeMode === 'chat'
+              onClick={() => onChangeMode('chat')}
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${activeMode === 'chat'
                 ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
                 : 'text-slate-400 hover:text-slate-200'
-            }`}
+                }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>Research Chat</span>
+            </button>
+
+            <button
+              onClick={() => onChangeMode('roadmap')}
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${activeMode === 'roadmap'
+                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
+                : 'text-slate-400 hover:text-slate-200'
+                }`}
+            >
+              <Map className="w-3.5 h-3.5" />
+              <span>Roadmap</span>
+            </button>
+
+            <button
+              onClick={() => onChangeMode('podcast')}
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${activeMode === 'podcast'
+                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
+                : 'text-slate-400 hover:text-slate-200'
+                }`}
+            >
+              <Headphones className="w-3.5 h-3.5" />
+              <span>Audio Podcast</span>
+            </button>
+
+            <button
+              onClick={() => onChangeMode('discoveries')}
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${activeMode === 'discoveries'
+                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
+                : 'text-slate-400 hover:text-slate-200'
+                }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Discoveries</span>
+            </button>
+          </div>
+
+          {/* Right: User Profile */}
+          <div className="flex items-center space-x-3 shrink-0">
+            <UserButton />
+          </div>
+        </div>
+
+        {/* Mobile Sub-Bar for Mode Switcher (Visible on Mobile `< md`) */}
+        <div className="md:hidden border-t border-[#1e293b]/80 bg-[#070b12] px-2 py-1 flex items-center justify-around gap-1 overflow-x-auto no-scrollbar">
+          <button
+            onClick={() => onChangeMode('chat')}
+            aria-label="Switch to Research Chat mode"
+            className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 min-h-[40px] ${activeMode === 'chat'
+              ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
+              : 'text-slate-400 hover:text-slate-200'
+              }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Research Chat</span>
+            <span>Chat</span>
           </button>
 
           <button
             onClick={() => onChangeMode('roadmap')}
-            className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${
-              activeMode === 'roadmap'
-                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
+            aria-label="Switch to Study Plan Roadmap mode"
+            className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 min-h-[40px] ${activeMode === 'roadmap'
+              ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
+              : 'text-slate-400 hover:text-slate-200'
+              }`}
           >
             <Map className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Roadmap</span>
+            <span>Roadmap</span>
           </button>
 
           <button
             onClick={() => onChangeMode('podcast')}
-            className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${
-              activeMode === 'podcast'
-                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
+            aria-label="Switch to Audio Podcast mode"
+            className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 min-h-[40px] ${activeMode === 'podcast'
+              ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
+              : 'text-slate-400 hover:text-slate-200'
+              }`}
           >
             <Headphones className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Audio Podcast</span>
+            <span>Podcast</span>
           </button>
 
           <button
             onClick={() => onChangeMode('discoveries')}
-            className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${
-              activeMode === 'discoveries'
-                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
+            aria-label="Switch to Proactive Discoveries mode"
+            className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 min-h-[40px] ${activeMode === 'discoveries'
+              ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
+              : 'text-slate-400 hover:text-slate-200'
+              }`}
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden md:inline">Discoveries</span>
+            <span>Discoveries</span>
           </button>
-        </div>
-
-        {/* Right: User Profile */}
-        <div className="flex items-center space-x-3">
-          <UserButton />
         </div>
       </header>
 

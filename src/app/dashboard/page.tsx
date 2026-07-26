@@ -20,7 +20,7 @@ export default function DashboardPage() {
   const [isMobileSourcesOpen, setIsMobileSourcesOpen] = useState(false);
 
   const [activeMode, setActiveMode] = useState<'chat' | 'roadmap' | 'podcast' | 'discoveries'>('chat');
-  
+
   const [messages, setMessages] = useState<
     { id: string; role: 'user' | 'assistant'; content: string; citations?: Citation[] }[]
   >([]);
@@ -387,7 +387,7 @@ export default function DashboardPage() {
         onToggleMobileSources={() => setIsMobileSourcesOpen((prev) => !prev)}
       />
 
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative min-h-0 h-[calc(100vh-4rem)]">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative min-h-0 h-[calc(100dvh-6.5rem)] md:h-[calc(100vh-4rem)]">
         {/* Left Pane: Knowledge Vault */}
         <SourcesPanel
           sources={sources}
@@ -397,12 +397,13 @@ export default function DashboardPage() {
           onToggleSource={handleToggleSource}
           onAddSource={handleAddSource}
           onDeleteSource={handleDeleteSource}
+          onSelectCitation={setActiveCitation}
           isMobileOpen={isMobileSourcesOpen}
           onCloseMobile={() => setIsMobileSourcesOpen(false)}
         />
 
         {/* Main Stage: Chat or Learning Mode */}
-        <div className="flex-1 flex flex-col min-w-0 relative">
+        <div className="flex-1 flex flex-col min-w-0 h-full min-h-0 overflow-hidden relative">
           {activeMode === 'chat' ? (
             <ChatPanel
               notebookTitle={activeNotebook?.title || 'Knowledge Workspace'}

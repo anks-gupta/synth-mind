@@ -1,8 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Citation } from '@/lib/types';
-import { RotateCw, ChevronLeft, ChevronRight, CheckCircle, Sparkles, HelpCircle, Eye, Trophy } from 'lucide-react';
+import {
+  RotateCw,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  Sparkles,
+  HelpCircle,
+  Eye,
+  Trophy,
+  Check,
+} from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { fireCelebrationConfetti } from '@/lib/confetti';
 
@@ -24,87 +34,145 @@ export function InteractiveFlashcards({ cards, onSelectCitation }: InteractiveFl
   const [isFlipped, setIsFlipped] = useState(false);
   const [masteredIds, setMasteredIds] = useState<number[]>([]);
 
-  if (!cards || cards.length === 0) return null;
+  const totalCards = cards?.length || 0;
+  const currentCard = cards?.[currentIndex];
 
-  const currentCard = cards[currentIndex];
-  const isMastered = masteredIds.includes(currentCard.id);
-
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
+    if (totalCards === 0) return;
     setIsFlipped(false);
-    setCurrentIndex((prev) => (prev + 1) % cards.length);
-  };
+    setCurrentIndex((prev) => (prev + 1) % totalCards);
+  }, [totalCards]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
+    if (totalCards === 0) return;
     setIsFlipped(false);
-    setCurrentIndex((prev) => (prev - 1 + cards.length) % cards.length);
-  };
+    setCurrentIndex((prev) => (prev - 1 + totalCards) % totalCards);
+  }, [totalCards]);
 
-  const toggleMastered = (id: number) => {
+  const toggleMastered = useCallback((id: number) => {
     setMasteredIds((prev) => {
       const next = prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id];
-      if (next.length === cards.length && cards.length > 0) {
+      if (next.length === totalCards && totalCards > 0) {
         fireCelebrationConfetti();
       }
       return next;
     });
-  };
+  }, [totalCards]);
+
+  // Keyboard Shortcuts Listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept typing in inputs/textareas
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      if (activeTag === 'input' || activeTag === 'textarea' || (document.activeElement as HTMLElement)?.isContentEditable) {
+        return;
+      }
+
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        handleNext();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handlePrev();
+      } else if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        setIsFlipped((prev) => !prev);
+      } else if (e.key.toLowerCase() === 'm' && currentCard) {
+        e.preventDefault();
+        toggleMastered(currentCard.id);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleNext, handlePrev, toggleMastered, currentCard]);
+
+  if (!cards || totalCards === 0 || !currentCard) return null;
+
+  const isMastered = masteredIds.includes(currentCard.id);
+  const progressPercent = Math.round(((currentIndex + 1) / totalCards) * 100);
+  const masteredPercent = Math.round((masteredIds.length / totalCards) * 100);
 
   return (
-    <div className="my-6 max-w-xl mx-auto space-y-4 select-none">
-      {/* Top Header & Progress */}
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center space-x-2">
-          <div className="w-7 h-7 rounded-xl bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-violet-400">
-            <Sparkles className="w-4 h-4 text-violet-400" />
+    <div className="my-6 w-full max-w-[720px] mx-auto select-none p-4 sm:p-6 md:p-8 bg-[#0B1120] rounded-3xl border border-white/[0.08] shadow-2xl space-y-6">
+      {/* 1. Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center space-x-3 min-w-0">
+          <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 border border-violet-500/30 flex items-center justify-center text-violet-400 shrink-0 shadow-lg shadow-violet-500/10">
+            <Sparkles className="w-5 h-5 text-violet-400" />
           </div>
-          <div>
-            <h4 className="text-xs font-black tracking-wide text-white">Interactive Recall Deck</h4>
-            <span className="text-[10px] text-slate-400 font-mono">
-              Card {currentIndex + 1} of {cards.length} • {masteredIds.length} Mastered
-            </span>
+          <div className="min-w-0">
+            <h3 className="text-base sm:text-lg font-bold text-[#F9FAFB] tracking-tight truncate">
+              Interactive Recall Deck
+            </h3>
+            <p className="text-xs text-[#9CA3AF] font-medium truncate">
+              Card <span className="text-violet-400 font-semibold">{currentIndex + 1}</span> of {totalCards} • <span className="text-emerald-400 font-semibold">{masteredIds.length}</span> Mastered ({masteredPercent}%)
+            </p>
           </div>
         </div>
 
         <button
+          type="button"
           onClick={() => toggleMastered(currentCard.id)}
-          className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 border cursor-pointer ${
+          aria-label={isMastered ? 'Card mastered' : 'Mark card as mastered'}
+          className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center space-x-2 border shrink-0 cursor-pointer shadow-sm ${
             isMastered
-              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-              : 'bg-[#0f172a] text-slate-400 border-[#1e293b] hover:text-slate-200'
+              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
+              : 'bg-[#111827] text-[#9CA3AF] border-white/[0.08] hover:text-[#F9FAFB] hover:border-violet-500/40'
           }`}
         >
-          <CheckCircle className={`w-3.5 h-3.5 ${isMastered ? 'text-emerald-400' : 'text-slate-500'}`} />
+          <CheckCircle2 className={`w-4 h-4 ${isMastered ? 'text-emerald-400' : 'text-[#9CA3AF]'}`} />
           <span>{isMastered ? 'Mastered' : 'Mark Mastered'}</span>
         </button>
       </div>
 
-      {/* 3D Flip Card Container */}
+      {/* 2. Progress Bar */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between text-[11px] font-mono text-[#9CA3AF]">
+          <span>Deck Completion</span>
+          <span className="text-violet-400 font-bold">{progressPercent}%</span>
+        </div>
+        <div className="w-full h-1.5 rounded-full bg-[#111827] border border-white/[0.06] overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-violet-600 via-purple-500 to-indigo-500 transition-all duration-300 rounded-full shadow-sm"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+      </div>
+
+      {/* 3. Hero Flashcard Section */}
       <div
-        onClick={() => setIsFlipped(!isFlipped)}
-        className="w-full h-64 cursor-pointer perspective-1000 group"
+        onClick={() => setIsFlipped((prev) => !prev)}
+        className="w-full cursor-pointer perspective-1000 group relative min-h-[340px] sm:min-h-[380px]"
       >
         <div
-          className={`relative w-full h-full duration-500 transform-style-3d transition-transform ${
+          className={`w-full h-full min-h-[340px] sm:min-h-[380px] duration-500 transform-style-3d transition-all ${
             isFlipped ? 'rotate-y-180' : ''
           }`}
         >
           {/* FRONT SIDE (Question) */}
-          <div className="absolute inset-0 w-full h-full rounded-2xl bg-gradient-to-br from-[#0f172a] to-[#090d16] border border-violet-500/30 p-6 flex flex-col justify-between backface-hidden shadow-xl group-hover:border-violet-500/60 transition-colors">
-            <div className="flex items-center justify-between border-b border-[#1e293b] pb-2.5">
-              <span className="text-[10px] uppercase font-mono font-extrabold tracking-wider text-violet-400 flex items-center space-x-1">
+          <div className="w-full h-full min-h-[340px] sm:min-h-[380px] rounded-3xl bg-[#111827] border border-white/[0.08] p-6 sm:p-8 flex flex-col justify-between backface-hidden shadow-[0_0_30px_rgba(139,92,246,0.08)] group-hover:border-violet-500/50 group-hover:shadow-[0_0_40px_rgba(139,92,246,0.2)] group-hover:-translate-y-1 transition-all duration-300 space-y-6">
+            {/* Top Badge Row */}
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 gap-2">
+              <span className="text-xs uppercase font-mono font-bold tracking-wider text-violet-400 flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 shrink-0">
                 <HelpCircle className="w-3.5 h-3.5" />
                 <span>Question</span>
               </span>
-              <span className="text-[10px] text-slate-400 font-mono">Click card to reveal answer ↺</span>
+              <span className="text-xs text-[#9CA3AF] font-mono flex items-center space-x-1 shrink-0">
+                <RotateCw className="w-3 h-3 text-violet-400" />
+                <span className="hidden sm:inline">Click card to reveal answer</span>
+                <span className="sm:hidden">Tap to flip</span>
+              </span>
             </div>
 
-            <div className="flex-1 flex items-center justify-center text-center p-2">
-              <div className="text-sm font-bold text-slate-100 leading-relaxed max-w-full overflow-hidden">
+            {/* Question Center Content */}
+            <div className="py-4 text-center my-auto min-h-[120px] flex items-center justify-center">
+              <div className="text-lg sm:text-xl md:text-2xl font-semibold text-[#F9FAFB] leading-relaxed max-w-full overflow-y-auto max-h-[300px] px-2 font-sans">
                 <ReactMarkdown
                   components={{
                     p: ({ children }) => <span>{children}</span>,
                     code: ({ children }) => (
-                      <code className="bg-violet-500/20 text-violet-300 border border-violet-500/40 px-1.5 py-0.5 rounded text-xs font-mono">
+                      <code className="bg-violet-500/20 text-violet-300 border border-violet-500/40 px-2 py-0.5 rounded-lg text-sm font-mono">
                         {children}
                       </code>
                     ),
@@ -115,29 +183,39 @@ export function InteractiveFlashcards({ cards, onSelectCitation }: InteractiveFl
               </div>
             </div>
 
-            <div className="flex items-center justify-center space-x-1.5 text-xs text-violet-400 font-bold">
-              <Eye className="w-3.5 h-3.5" />
-              <span>Tap to Flip Answer</span>
+            {/* Bottom Interactive Area */}
+            <div className="pt-3 border-t border-white/[0.06] flex items-center justify-center space-x-2 text-xs text-violet-400 font-bold group-hover:text-violet-300 transition-colors">
+              <Eye className="w-4 h-4" />
+              <span>Click anywhere to reveal answer</span>
             </div>
           </div>
 
-          {/* BACK SIDE (Answer & Citation) */}
-          <div className="absolute inset-0 w-full h-full rounded-2xl bg-gradient-to-br from-[#1e1b4b]/95 to-[#0f172a] border border-emerald-500/40 p-6 flex flex-col justify-between backface-hidden rotate-y-180 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2.5">
-              <span className="text-[10px] uppercase font-mono font-extrabold tracking-wider text-emerald-400 flex items-center space-x-1">
-                <CheckCircle className="w-3.5 h-3.5" />
-                <span>Answer & Citation</span>
+          {/* BACK SIDE (Answer State) */}
+          <div className="absolute inset-0 w-full h-full rounded-3xl bg-gradient-to-br from-[#17153b] via-[#111827] to-[#0d1322] border border-violet-500/40 p-6 sm:p-8 flex flex-col justify-between backface-hidden rotate-y-180 shadow-[0_0_40px_rgba(139,92,246,0.25)] overflow-hidden">
+            {/* Top Question Context */}
+            <div className="space-y-1.5 text-left pb-3 border-b border-white/[0.08] shrink-0">
+              <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-violet-400 flex items-center space-x-1">
+                <HelpCircle className="w-3 h-3" />
+                <span>Question Context</span>
               </span>
-              <span className="text-[10px] text-slate-400 font-mono">Tap card to flip back</span>
+              <p className="text-xs font-medium text-[#9CA3AF] line-clamp-2">
+                {currentCard.front}
+              </p>
             </div>
 
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-2 space-y-3">
-              <div className="text-xs md:text-sm font-medium text-emerald-100 leading-relaxed max-w-full overflow-hidden">
+            {/* Single Answer Scroll Area (Eliminates Double Scrollbars) */}
+            <div className="flex-1 overflow-y-auto pr-1 my-2 space-y-3 text-left">
+              <span className="text-xs uppercase font-mono font-bold tracking-wider text-emerald-400 flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 w-max">
+                <Check className="w-3.5 h-3.5" />
+                <span>Answer</span>
+              </span>
+
+              <div className="text-base sm:text-lg font-medium text-emerald-100 leading-relaxed font-sans">
                 <ReactMarkdown
                   components={{
                     p: ({ children }) => <span>{children}</span>,
                     code: ({ children }) => (
-                      <code className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.5 rounded text-xs font-mono">
+                      <code className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-lg text-xs font-mono">
                         {children}
                       </code>
                     ),
@@ -157,76 +235,80 @@ export function InteractiveFlashcards({ cards, onSelectCitation }: InteractiveFl
                         onSelectCitation?.(currentCard.citation);
                       }
                     }}
-                    className="synth-citation text-[11px] font-mono px-2.5 py-1 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/35 border border-emerald-500/40 text-emerald-300 font-bold inline-flex items-center space-x-1 cursor-pointer transition-all hover:scale-105 shadow-sm"
-                    title={currentCard.citation ? `Inspect Ground Truth Passage: ${currentCard.citation.sourceTitle}` : `Source Reference [${currentCard.citationId}]`}
+                    className="text-xs font-mono px-3 py-1 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/35 border border-emerald-500/40 text-emerald-300 font-bold inline-flex items-center space-x-1.5 cursor-pointer transition-all shadow-sm"
                   >
-                    <span>Source Reference [{currentCard.citationId}]</span>
-                    {currentCard.citation?.sourceTitle && (
-                      <span className="opacity-80 text-[10px] truncate max-w-[120px]">
-                        ({currentCard.citation.sourceTitle})
-                      </span>
-                    )}
+                    <span>Source #{currentCard.citationId}</span>
                   </button>
                 </div>
               )}
             </div>
 
-            <div className="flex items-center justify-center space-x-1.5 text-xs text-emerald-400 font-bold">
-              <RotateCw className="w-3.5 h-3.5" />
-              <span>Tap to Flip Question</span>
+            {/* Bottom Interactive Area */}
+            <div className="pt-3 border-t border-white/[0.06] flex items-center justify-center space-x-2 text-xs text-emerald-400 font-bold group-hover:text-emerald-300 transition-colors shrink-0">
+              <RotateCw className="w-4 h-4" />
+              <span>Click anywhere to flip back</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Navigation Controls */}
-      <div className="flex items-center justify-between pt-1">
+      {/* 4. Bottom Navigation Row */}
+      <div className="flex items-center justify-between gap-3 pt-2">
         <button
+          type="button"
           onClick={handlePrev}
-          className="px-3.5 py-2 rounded-xl bg-[#0f172a] hover:bg-[#1e293b] border border-[#1e293b] text-slate-300 text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer hover:scale-105"
+          disabled={currentIndex === 0}
+          aria-label="Previous card"
+          className="flex-1 sm:flex-initial px-4 py-2.5 rounded-2xl bg-[#111827] hover:bg-[#1f2937] border border-white/[0.08] text-[#F9FAFB] text-xs font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-4 h-4 text-[#9CA3AF]" />
           <span>Previous</span>
         </button>
 
-        {/* Progress Dots */}
-        <div className="flex items-center space-x-1.5">
-          {cards.map((c, i) => (
-            <div
-              key={c.id}
-              onClick={() => {
-                setIsFlipped(false);
-                setCurrentIndex(i);
-              }}
-              className={`h-2 rounded-full transition-all cursor-pointer ${
-                i === currentIndex
-                  ? 'w-6 bg-violet-500'
-                  : masteredIds.includes(c.id)
-                  ? 'w-2 bg-emerald-500'
-                  : 'w-2 bg-slate-700 hover:bg-slate-500'
-              }`}
-            />
-          ))}
+        <div className="text-xs font-mono font-bold text-[#F9FAFB] px-3 py-1.5 rounded-xl bg-[#111827] border border-white/[0.06] shadow-inner shrink-0">
+          {currentIndex + 1} / {totalCards}
         </div>
 
         <button
+          type="button"
           onClick={handleNext}
-          className="px-3.5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-md shadow-violet-500/25 hover:scale-105"
+          aria-label="Next card"
+          className="flex-1 sm:flex-initial px-5 py-2.5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40"
         >
           <span>Next</span>
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Congratulatory Celebration Banner */}
-      {masteredIds.length === cards.length && cards.length > 0 && (
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-emerald-500/20 border border-emerald-500/50 text-center space-y-1 animate-in fade-in-0 duration-300 shadow-xl shadow-emerald-500/10">
-          <h4 className="text-xs font-black text-emerald-300 tracking-wide uppercase flex items-center justify-center space-x-1.5">
-            <Trophy className="w-4 h-4 text-amber-400" />
+      {/* 5. Keyboard Shortcuts Helper Legend (Desktop Only) */}
+      <div className="pt-2 hidden sm:flex items-center justify-center space-x-3 text-[10px] font-mono text-[#9CA3AF] border-t border-white/[0.06]">
+        <span className="flex items-center space-x-1">
+          <kbd className="px-1.5 py-0.5 rounded bg-[#111827] border border-white/[0.1] text-violet-300">←</kbd>
+          <span>Prev</span>
+        </span>
+        <span className="flex items-center space-x-1">
+          <kbd className="px-1.5 py-0.5 rounded bg-[#111827] border border-white/[0.1] text-violet-300">Space</kbd>
+          <span>Flip</span>
+        </span>
+        <span className="flex items-center space-x-1">
+          <kbd className="px-1.5 py-0.5 rounded bg-[#111827] border border-white/[0.1] text-violet-300">→</kbd>
+          <span>Next</span>
+        </span>
+        <span className="flex items-center space-x-1">
+          <kbd className="px-1.5 py-0.5 rounded bg-[#111827] border border-white/[0.1] text-violet-300">M</kbd>
+          <span>Master</span>
+        </span>
+      </div>
+
+      {/* 6. Congratulatory Deck Mastery Banner */}
+      {masteredIds.length === totalCards && totalCards > 0 && (
+        <div className="p-4 sm:p-6 rounded-3xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-emerald-500/20 border border-emerald-500/50 text-center space-y-2 animate-in fade-in-0 duration-300 shadow-2xl shadow-emerald-500/20">
+          <h4 className="text-sm font-black text-emerald-300 tracking-wide uppercase flex items-center justify-center space-x-2">
+            <Trophy className="w-5 h-5 text-amber-400" />
             <span>🎉 Deck Fully Mastered!</span>
           </h4>
-          <p className="text-[11px] text-emerald-200/90 font-medium">
-            Outstanding work! You've successfully reviewed and mastered all {cards.length} flashcards in this deck.
+          <p className="text-xs text-emerald-200/90 font-medium max-w-md mx-auto leading-relaxed">
+            Outstanding work! You've successfully reviewed and mastered all {totalCards} flashcards in this recall deck.
           </p>
         </div>
       )}
