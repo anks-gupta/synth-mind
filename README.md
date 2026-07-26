@@ -6,7 +6,7 @@ When a citation is clicked, SynthMind's **Deep-Linked Source Viewer** automatica
 
 ---
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20SynthMind-10B981?style=for-the-badge)](https://synth-mind-ai.vercel.app)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20SynthMind-10B981?style=for-the-badge)](https://synth-mind.onrender.com/)
 
 ## 🌟 Key Features
 
