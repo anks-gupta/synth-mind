@@ -94,7 +94,7 @@ export function InteractiveFlashcards({ cards, onSelectCitation }: InteractiveFl
   const masteredPercent = Math.round((masteredIds.length / totalCards) * 100);
 
   return (
-    <div className="my-6 w-full max-w-[720px] mx-auto select-none p-4 sm:p-6 md:p-8 bg-[#0B1120] rounded-3xl border border-white/[0.08] shadow-2xl space-y-6">
+    <div className="my-4 sm:my-6 w-full max-w-[720px] mx-auto select-none p-3.5 sm:p-5 md:p-8 bg-[#0B1120] rounded-2xl sm:rounded-3xl border border-white/[0.08] shadow-2xl space-y-4 sm:space-y-6">
       {/* 1. Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center space-x-3 min-w-0">
@@ -143,15 +143,15 @@ export function InteractiveFlashcards({ cards, onSelectCitation }: InteractiveFl
       {/* 3. Hero Flashcard Section */}
       <div
         onClick={() => setIsFlipped((prev) => !prev)}
-        className="w-full cursor-pointer perspective-1000 group relative min-h-[340px] sm:min-h-[380px]"
+        className="w-full cursor-pointer perspective-1000 group relative min-h-[320px] sm:min-h-[380px]"
       >
         <div
-          className={`w-full h-full min-h-[340px] sm:min-h-[380px] duration-500 transform-style-3d transition-all ${
+          className={`w-full h-full min-h-[320px] sm:min-h-[380px] duration-500 transform-style-3d transition-all ${
             isFlipped ? 'rotate-y-180' : ''
           }`}
         >
           {/* FRONT SIDE (Question) */}
-          <div className="w-full h-full min-h-[340px] sm:min-h-[380px] rounded-3xl bg-[#111827] border border-white/[0.08] p-6 sm:p-8 flex flex-col justify-between backface-hidden shadow-[0_0_30px_rgba(139,92,246,0.08)] group-hover:border-violet-500/50 group-hover:shadow-[0_0_40px_rgba(139,92,246,0.2)] group-hover:-translate-y-1 transition-all duration-300 space-y-6">
+          <div className="w-full h-full min-h-[320px] sm:min-h-[380px] rounded-2xl sm:rounded-3xl bg-[#111827] border border-white/[0.08] p-4 sm:p-6 md:p-8 flex flex-col justify-between backface-hidden shadow-[0_0_30px_rgba(139,92,246,0.08)] group-hover:border-violet-500/50 group-hover:shadow-[0_0_40px_rgba(139,92,246,0.2)] group-hover:-translate-y-1 transition-all duration-300 space-y-4 sm:space-y-6">
             {/* Top Badge Row */}
             <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 gap-2">
               <span className="text-xs uppercase font-mono font-bold tracking-wider text-violet-400 flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 shrink-0">
@@ -166,8 +166,8 @@ export function InteractiveFlashcards({ cards, onSelectCitation }: InteractiveFl
             </div>
 
             {/* Question Center Content */}
-            <div className="py-4 text-center my-auto min-h-[120px] flex items-center justify-center">
-              <div className="text-lg sm:text-xl md:text-2xl font-semibold text-[#F9FAFB] leading-relaxed max-w-full overflow-y-auto max-h-[300px] px-2 font-sans">
+            <div className="py-2 text-center my-auto min-h-[100px] flex items-center justify-center">
+              <div className="text-base sm:text-xl md:text-2xl font-semibold text-[#F9FAFB] leading-relaxed max-w-full overflow-y-auto max-h-[280px] px-1 font-sans">
                 <ReactMarkdown
                   components={{
                     p: ({ children }) => <span>{children}</span>,
@@ -191,7 +191,7 @@ export function InteractiveFlashcards({ cards, onSelectCitation }: InteractiveFl
           </div>
 
           {/* BACK SIDE (Answer State) */}
-          <div className="absolute inset-0 w-full h-full rounded-3xl bg-gradient-to-br from-[#17153b] via-[#111827] to-[#0d1322] border border-violet-500/40 p-6 sm:p-8 flex flex-col justify-between backface-hidden rotate-y-180 shadow-[0_0_40px_rgba(139,92,246,0.25)] overflow-hidden">
+          <div className="absolute inset-0 w-full h-full rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#17153b] via-[#111827] to-[#0d1322] border border-violet-500/40 p-4 sm:p-6 md:p-8 flex flex-col justify-between backface-hidden rotate-y-180 shadow-[0_0_40px_rgba(139,92,246,0.25)] overflow-hidden">
             {/* Top Question Context */}
             <div className="space-y-1.5 text-left pb-3 border-b border-white/[0.08] shrink-0">
               <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-violet-400 flex items-center space-x-1">

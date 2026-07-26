@@ -261,11 +261,11 @@ export function Navbar({
         </div>
 
         {/* Mobile Sub-Bar for Mode Switcher (Visible on Mobile `< md`) */}
-        <div className="md:hidden border-t border-[#1e293b]/80 bg-[#070b12] px-2 py-1 flex items-center justify-around gap-1 overflow-x-auto no-scrollbar">
+        <div className="md:hidden border-t border-[#1e293b]/80 bg-[#070b12] px-1.5 py-1 flex items-center justify-start xs:justify-center gap-1 overflow-x-auto no-scrollbar scrollbar-none min-w-0">
           <button
             onClick={() => onChangeMode('chat')}
             aria-label="Switch to Research Chat mode"
-            className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 min-h-[40px] ${activeMode === 'chat'
+            className={`flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all shrink-0 min-h-[36px] ${activeMode === 'chat'
               ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
               : 'text-slate-400 hover:text-slate-200'
               }`}
@@ -277,7 +277,7 @@ export function Navbar({
           <button
             onClick={() => onChangeMode('roadmap')}
             aria-label="Switch to Study Plan Roadmap mode"
-            className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 min-h-[40px] ${activeMode === 'roadmap'
+            className={`flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all shrink-0 min-h-[36px] ${activeMode === 'roadmap'
               ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
               : 'text-slate-400 hover:text-slate-200'
               }`}
@@ -289,7 +289,7 @@ export function Navbar({
           <button
             onClick={() => onChangeMode('podcast')}
             aria-label="Switch to Audio Podcast mode"
-            className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 min-h-[40px] ${activeMode === 'podcast'
+            className={`flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all shrink-0 min-h-[36px] ${activeMode === 'podcast'
               ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
               : 'text-slate-400 hover:text-slate-200'
               }`}
@@ -301,7 +301,7 @@ export function Navbar({
           <button
             onClick={() => onChangeMode('discoveries')}
             aria-label="Switch to Proactive Discoveries mode"
-            className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 min-h-[40px] ${activeMode === 'discoveries'
+            className={`flex items-center space-x-1 px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all shrink-0 min-h-[36px] ${activeMode === 'discoveries'
               ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'
               : 'text-slate-400 hover:text-slate-200'
               }`}

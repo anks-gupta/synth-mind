@@ -17,10 +17,13 @@ When a citation is clicked, SynthMind's **Deep-Linked Source Viewer** automatica
    - 🌐 **Web URL Scraper:** Clean HTML body extraction via Cheerio with deep text fragment anchors.
    - ⏱️ **VTT Transcripts:** Parses timestamped subtitle files.
    - 📝 **Plain Text / MD:** Normalizes raw text notes.
-3. ⚡ **Asynchronous Task Queue System (`TaskQueue`):**
-   - **Concurrency Management:** Limits active background ingestion workers (max 3 concurrent jobs) to prevent memory or API rate-limit exhaustion.
-   - **Exponential Backoff Retries:** Automatically retries transient job failures up to 3 times.
-   - **Serverless Execution Protection:** Dynamically leverages Vercel's `waitUntil` to guarantee background jobs complete reliably on cloud serverless infrastructure without getting terminated early.
+3. ⚡ **Production-Grade BullMQ & Persistent Redis Task Queue System:**
+   - **Persistent Redis Storage:** Replaces volatile in-memory queues with persistent Redis storage (Render Redis / Upstash / AWS ElastiCache / Local), ensuring job persistence across Docker container restarts and deployments.
+   - **Configurable Concurrency & Backoff:** Limits active ingestion workers (default 3 concurrent workers) with exponential backoff retries (3 attempts).
+   - **Long-Running Workload Optimization:** 5-minute lock duration (`lockDurationMs: 300000`) and 10-minute job timeout (`timeoutMs: 600000`) designed for heavy PDF parsing, OCR, and vector embedding indexing.
+   - **Job Retention & Debugging:** Retains the last 50 completed jobs (1-hour retention) and last 100 failed jobs for administrative debugging.
+   - **Graceful Process Shutdown:** Handles `SIGINT` and `SIGTERM` signals cleanly to ensure in-flight jobs complete before closing Redis sockets.
+   - **Build Phase Safety:** Uses lazy JS Proxies so Next.js static build compilation (`npm run build`) never opens Redis connections.
 4. 🧠 **The Hybrid Mix RAG Engine:**
    - **Query Deconstruction:** Splits compound questions into single-intent sub-questions.
    - **Multi-Query Expansion:** Generates 3 semantic variations using alternate technical phrasing.
@@ -52,10 +55,11 @@ graph TD
         WorkspaceLoader["Glassmorphic Workspace Loader"]
     end
 
-    subgraph QueueLayer ["Async Queue & Background Job Layer"]
-        TaskQueue["TaskQueue Manager (Concurrency Control)"]
-        IngestionQueue["Ingestion Job Queue (3 Retries & Exponential Backoff)"]
-        ServerlessGuard["Serverless waitUntil Execution Guard"]
+    subgraph QueueLayer ["Persistent Queue & Background Worker Layer"]
+        BaseQueue["BaseQueue Abstraction (BullMQ Queue)"]
+        BaseWorker["BaseWorker Abstraction (3 Concurrent Workers, 5-Min Lock)"]
+        BaseEvents["BaseQueueEvents Monitor"]
+        RedisStorage[("Redis Persistent Storage - Render / Upstash / Local")]
     end
 
     subgraph SecurityLayer ["Security & Gateway Layer"]
@@ -77,11 +81,12 @@ graph TD
     end
 
     UI --> Clerk
-    Clerk --> TaskQueue
-    TaskQueue --> IngestionQueue
-    IngestionQueue --> ServerlessGuard
-    ServerlessGuard --> Qdrant
-    ServerlessGuard --> NeonDB
+    Clerk --> BaseQueue
+    BaseQueue --> RedisStorage
+    RedisStorage --> BaseWorker
+    BaseWorker --> BaseEvents
+    BaseWorker --> Qdrant
+    BaseWorker --> NeonDB
     
     Guardrails --> Deconstruct
     Deconstruct --> HyDE
@@ -132,9 +137,9 @@ model Source {
 
 ---
 
-## 🛠️ Environment Variables Setup (`.env.local`)
+## 🛠️ Environment Variables Setup (`.env`)
 
-Create a `.env.local` file in the root directory:
+Create a `.env` file in the root directory:
 
 ```env
 # Clerk Authentication
@@ -150,6 +155,14 @@ QDRANT_API_KEY="your-qdrant-api-key"
 
 # OpenAI API Key
 OPENAI_API_KEY="sk-..."
+
+# Redis Configuration for BullMQ Queue (Render Redis / Upstash / AWS ElastiCache / Local)
+REDIS_URL="rediss://default:password@your-upstash-db.upstash.io:6379"
+# Or separate parameters:
+# REDIS_HOST="localhost"
+# REDIS_PORT=6379
+# REDIS_PASSWORD=""
+QUEUE_NAME="document-ingestion-queue"
 
 # YouTube Transcript Authenticated Cookies (Optional - for bot/LOGIN_REQUIRED protection)
 YT_COOKIES_PATH="/etc/secrets/cookies.txt"
@@ -197,7 +210,10 @@ npm run build
 
 1. **Connect Repo**: Create a new **Web Service** on Render and connect your GitHub repository.
 2. **Environment**: Choose **Docker** as the runtime environment. Render will automatically use the root `Dockerfile`.
-3. **Environment Variables**: Add your `.env` variables (`DATABASE_URL`, `QDRANT_URL`, `QDRANT_API_KEY`, `OPENAI_API_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`).
-4. **Attach Cookies File (Secret Files)**:
+3. **Provision Redis**:
+   - Create a **Render Redis** instance or use an **Upstash Redis** database.
+   - Copy the connection string to `REDIS_URL` in your Render Web Service Environment variables.
+4. **Environment Variables**: Add your `.env` variables (`DATABASE_URL`, `QDRANT_URL`, `QDRANT_API_KEY`, `OPENAI_API_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `REDIS_URL`, `QUEUE_NAME`).
+5. **Attach Cookies File (Secret Files)**:
    - In Render Dashboard under **Secret Files**, create a secret file named `cookies.txt` containing your Netscape-formatted YouTube cookies.
    - Set Environment Variable: `YT_COOKIES_PATH=/etc/secrets/cookies.txt`.
