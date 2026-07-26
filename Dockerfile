@@ -1,7 +1,7 @@
 FROM node:20-alpine AS base
 
-# Install system dependencies: python3, ffmpeg, curl, and yt-dlp
-RUN apk add --no-cache python3 py3-pip ffmpeg curl ca-certificates && \
+# Install system dependencies: python3, ffmpeg, curl, openssl, libc6-compat, and yt-dlp
+RUN apk add --no-cache python3 py3-pip ffmpeg curl ca-certificates openssl libc6-compat && \
     pip3 install --no-cache-dir --break-system-packages yt-dlp
 
 WORKDIR /app
