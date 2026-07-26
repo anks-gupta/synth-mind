@@ -6,6 +6,8 @@ When a citation is clicked, SynthMind's **Deep-Linked Source Viewer** automatica
 
 ---
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20SynthMind-10B981?style=for-the-badge)](https://synth-mind-ai.vercel.app)
+
 ## 🌟 Key Features
 
 1. 📚 **Multi-Notebook Workspace Management:** Isolated knowledge bases per notebook with scoped skeleton loading in Neon Postgres DB and Qdrant Cloud Vector DB.
