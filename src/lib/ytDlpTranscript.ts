@@ -76,6 +76,8 @@ export async function fetchTranscriptYtDlp(
     `${lang},en,en-US,en-GB,.*`,
     '--sub-format',
     'json3/vtt/best',
+    '--js-runtimes',
+    'node',
     '-o',
     outputPrefix,
   ];
