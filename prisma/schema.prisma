@@ -1,0 +1,79 @@
+// SynthMind Prisma Database Schema for Neon Serverless Postgres
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Notebook {
+  id          String   @id @default(uuid())
+  userId      String   // Clerk User ID
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sources      Source[]
+  notes        Note[]
+  studyPlans   StudyPlan[]
+  chatMessages ChatMessage[]
+
+  @@index([userId])
+}
+
+model Source {
+  id           String   @id @default(uuid())
+  notebookId   String
+  notebook     Notebook @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  title        String
+  type         String   // "pdf" | "text" | "url" | "youtube" | "vtt"
+  urlOrPath    String?
+  s3Key        String?
+  s3Url        String?
+  status       String   @default("pending") // "pending" | "indexing" | "ready" | "error"
+  errorMessage String?
+  content      String?  @db.Text
+  createdAt    DateTime @default(now())
+
+  @@index([notebookId])
+}
+
+model Note {
+  id          String   @id @default(uuid())
+  notebookId  String
+  notebook    Notebook @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  title       String
+  content     String   @db.Text
+  createdAt   DateTime @default(now())
+
+  @@index([notebookId])
+}
+
+model StudyPlan {
+  id          String   @id @default(uuid())
+  notebookId  String
+  notebook    Notebook @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  title       String
+  stepData    Json     // Sequential roadmap step array
+  createdAt   DateTime @default(now())
+
+  @@index([notebookId])
+}
+
+model ChatMessage {
+  id           String   @id @default(uuid())
+  notebookId   String
+  notebook     Notebook @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  userId       String   // Clerk User ID
+  role         String   // "user" | "assistant"
+  content      String   @db.Text
+  citationsJson String? @db.Text // JSON-serialized Citation[] for assistant messages
+  createdAt    DateTime @default(now())
+
+  @@index([notebookId, createdAt])
+  @@index([userId])
+}

@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-dark: #070b12;
+    --panel-dark: #0f172a;
+    --card-dark: #1e293b;
+    --border-dark: #334155;
+    --accent-emerald: #10b981;
+    --accent-cyan: #06b6d4;
+    --accent-violet: #8b5cf6;
+    --accent-rose: #f43f5e;
+    --accent-amber: #f59e0b;
+  }
+
+  body {
+    background-color: #070b12;
+    color: #f8fafc;
+    font-family: var(--font-inter), Inter, system-ui, -apple-system, sans-serif;
+    font-feature-settings: "cv11", "ss01";
+    overflow-x: hidden;
+  }
+}
+
+/* SynthMind Citation Badges */
+.synth-citation {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  margin: 0 2px;
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: #a78bfa;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  border-radius: 6px;
+  cursor: pointer;
+  vertical-align: middle;
+  transition: all 0.15s ease-in-out;
+}
+
+.synth-citation:hover {
+  background: rgba(139, 92, 246, 0.28);
+  border-color: #8b5cf6;
+  color: #c4b5fd;
+  transform: translateY(-1px);
+}
+
+/* 3D Flip Card Utilities */
+.perspective-1000 {
+  perspective: 1000px;
+}
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Fix ReactMarkdown List Items & Paragraphs */
+ul li p,
+ol li p {
+  display: inline;
+  margin: 0;
+}
+
+ul li,
+ol li {
+  margin-bottom: 0.6rem;
+}
+
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #070b12;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Glow effects */
+.violet-glow {
+  box-shadow: 0 0 25px -5px rgba(139, 92, 246, 0.25);
+}
+
+.emerald-glow {
+  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25);
+}
