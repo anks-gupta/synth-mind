@@ -7,6 +7,7 @@ import { SourcesPanel } from '@/components/SourcesPanel';
 import { ChatPanel } from '@/components/ChatPanel';
 import { LearningStudio } from '@/components/LearningStudio';
 import { SourceViewer } from '@/components/SourceViewer';
+import { WorkspaceLoader } from '@/components/WorkspaceLoader';
 
 export default function DashboardPage() {
   const [notebooks, setNotebooks] = useState<NotebookItem[]>([]);
@@ -364,6 +365,10 @@ export default function DashboardPage() {
       }
     }
   };
+
+  if (isLoadingNotebooks) {
+    return <WorkspaceLoader message="Loading Research Workspace..." />;
+  }
 
   return (
     <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-[#070b12]">

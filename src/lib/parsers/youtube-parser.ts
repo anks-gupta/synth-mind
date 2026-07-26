@@ -49,7 +49,7 @@ function extractInlineJson(html: string, globalName: string): any {
         if (depth === 0) {
           try {
             return JSON.parse(html.slice(start, i + 1));
-          } catch (e) {}
+          } catch (e) { }
         }
       }
     }
@@ -60,7 +60,7 @@ function extractInlineJson(html: string, globalName: string): any {
   if (match) {
     try {
       return JSON.parse(match[1]);
-    } catch (e) {}
+    } catch (e) { }
   }
 
   const tracksMatch = html.match(/"captionTracks":\s*(\[.*?\])/);
@@ -68,25 +68,28 @@ function extractInlineJson(html: string, globalName: string): any {
     try {
       const tracks = JSON.parse(tracksMatch[1]);
       return { captions: { playerCaptionsTracklistRenderer: { captionTracks: tracks } } };
-    } catch (e) {}
+    } catch (e) { }
   }
 
   return null;
 }
 
-async function fetchWatchPage(videoId: string, userAgent: string): Promise<any[]> {
-  const url = `https://www.youtube.com/watch?v=${videoId}`;
-  const consentCookie = `CONSENT=YES+cb.20210328-17-p0.en+FX+${Math.floor(Math.random() * 900) + 100}`;
+const DESKTOP_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+const MOBILE_UA =
+  'Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
 
-  const res = await fetch(url, {
+async function fetchWatchPageAndTracks(
+  videoId: string,
+  userAgent: string
+): Promise<{ baseUrl: string; languageCode: string }[] | null> {
+  const consentNum = Math.floor(Math.random() * 900) + 100;
+  const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
     headers: {
       'User-Agent': userAgent,
       'Accept-Language': 'en-US,en;q=0.9',
-      'Cookie': consentCookie,
-      'Sec-Fetch-Mode': 'navigate',
-      'Cache-Control': 'no-cache',
+      Cookie: `CONSENT=YES+cb.20210328-17-p0.en+FX+${consentNum}`,
     },
-    cache: 'no-store',
   });
 
   if (!res.ok) {
@@ -94,105 +97,92 @@ async function fetchWatchPage(videoId: string, userAgent: string): Promise<any[]
   }
 
   const html = await res.text();
-  const playerResponse = extractInlineJson(html, 'ytInitialPlayerResponse');
-  const tracks = playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
 
-  if (!tracks || !Array.isArray(tracks) || tracks.length === 0) {
-    throw new Error('No captionTracks found in watch page response');
+  // Bot/consent detection markers — bail early with a clear signal to retry with a different UA
+  if (html.includes('action="https://consent.youtube.com') || html.includes('id="captcha-form"')) {
+    throw new Error('Blocked by consent/captcha interstitial');
+  }
+
+  const playerResponse = extractInlineJson(html, 'var ytInitialPlayerResponse');
+  if (!playerResponse) {
+    throw new Error('Could not locate ytInitialPlayerResponse in page');
+  }
+
+  const playabilityStatus = playerResponse?.playabilityStatus?.status;
+  if (playabilityStatus && playabilityStatus !== 'OK') {
+    throw new Error(`Video not playable: ${playabilityStatus}`);
+  }
+
+  const tracks =
+    playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+
+  if (!tracks || tracks.length === 0) {
+    return null; // no captions at all — not an error, just genuinely no captions
   }
 
   return tracks;
 }
 
-export async function fetchTranscriptDirect(videoId: string, lang = 'en'): Promise<TranscriptItem[]> {
-  const desktopUA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
-  const mobileUA = 'Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
+async function fetchDirectAttempt(
+  videoId: string,
+  lang: string,
+  userAgent: string
+): Promise<TranscriptItem[] | null> {
+  const tracks = await fetchWatchPageAndTracks(videoId, userAgent);
+  if (!tracks) return null;
 
-  let tracks: any[];
-  try {
-    tracks = await fetchWatchPage(videoId, desktopUA);
-  } catch (err: any) {
-    console.warn(`[fetchTranscriptDirect desktop] failed for ${videoId}:`, err?.message || err);
-    tracks = await fetchWatchPage(videoId, mobileUA);
-  }
+  const track = tracks.find((t: any) => t.languageCode === lang) ?? tracks[0];
+  if (!track?.baseUrl) return null;
 
-  const selectedTrack =
-    tracks.find((t: any) => t.languageCode === lang) ||
-    tracks.find((t: any) => t.languageCode?.startsWith(lang)) ||
-    tracks[0];
-
-  if (!selectedTrack?.baseUrl) {
-    throw new Error('Selected caption track has no baseUrl');
-  }
-
-  const trackUrl = selectedTrack.baseUrl.replace(/&fmt=[^&]+/, '') + '&fmt=json3';
-  const trackRes = await fetch(trackUrl, {
-    headers: { 'User-Agent': desktopUA },
-    cache: 'no-store',
+  const captionRes = await fetch(`${track.baseUrl}&fmt=json3`, {
+    headers: { 'User-Agent': userAgent },
   });
-
-  if (!trackRes.ok) {
-    throw new Error(`Caption track fetch failed with status ${trackRes.status}`);
+  if (!captionRes.ok) {
+    throw new Error(`Caption track fetch returned status ${captionRes.status}`);
   }
 
-  const jsonText = await trackRes.text();
-  if (!jsonText.trim()) {
-    throw new Error('Caption track returned empty text');
-  }
+  const data = await captionRes.json();
+  const events = data?.events;
+  if (!events || events.length === 0) return null;
 
   const items: TranscriptItem[] = [];
-
-  // Try JSON fmt=json3 parsing
-  try {
-    const data = JSON.parse(jsonText);
-    const events = data.events || [];
-    for (const event of events) {
-      if (!event.segs || event.aAppend === 1) continue;
-      const rawText = event.segs.map((s: any) => s.utf8 || '').join('');
-      const cleanedText = decodeHTMLEntities(rawText).trim();
-      if (cleanedText) {
-        items.push({
-          text: cleanedText,
-          offset: event.tStartMs || 0,
-          duration: event.dDurationMs || 0,
-        });
-      }
-    }
-    if (items.length > 0) return items;
-  } catch (e) {}
-
-  // Fallback XML parsing (<text start="s" dur="s">)
-  const xmlRegex = /<text\s+start="([\d\.]+)"\s+dur="([\d\.]+)"[^>]*>(.*?)<\/text>/gi;
-  let match: RegExpExecArray | null;
-  while ((match = xmlRegex.exec(jsonText)) !== null) {
-    const startSec = parseFloat(match[1]);
-    const durSec = parseFloat(match[2]);
-    const cleanedText = decodeHTMLEntities(match[3]).trim();
-    if (cleanedText) {
-      items.push({
-        text: cleanedText,
-        offset: Math.floor(startSec * 1000),
-        duration: Math.floor(durSec * 1000),
-      });
-    }
+  for (const ev of events) {
+    if (!ev.segs || ev.segs.length === 0) continue;
+    const text = ev.segs.map((s: any) => s.utf8 ?? '').join('').trim();
+    if (!text) continue;
+    items.push({
+      text: decodeHTMLEntities(text),
+      offset: ev.tStartMs ?? 0,
+      duration: ev.dDurationMs ?? 0,
+    });
   }
 
-  if (items.length === 0) {
-    throw new Error('No valid transcript items parsed from caption track');
-  }
-
-  return items;
+  return items.length > 0 ? items : null;
 }
 
-const noCacheFetch = (input: RequestInfo | URL, init?: RequestInit) => {
-  return fetch(input, {
-    ...init,
-    cache: 'no-store',
-  });
-};
+export async function fetchTranscriptDirect(
+  videoId: string,
+  lang: string = 'en'
+): Promise<TranscriptItem[]> {
+  try {
+    const result = await fetchDirectAttempt(videoId, lang, DESKTOP_UA);
+    if (result) return result;
+  } catch (err: any) {
+    console.warn(`[fetchTranscriptDirect] desktop UA attempt failed for ${videoId}:`, err?.message || err);
+  }
+
+  try {
+    const result = await fetchDirectAttempt(videoId, lang, MOBILE_UA);
+    if (result) return result;
+  } catch (err: any) {
+    console.warn(`[fetchTranscriptDirect] mobile UA attempt failed for ${videoId}:`, err?.message || err);
+  }
+
+  throw new Error('Direct fetch found no usable captions');
+}
 
 async function fetchTranscriptItems(videoId: string): Promise<TranscriptItem[]> {
-  // Strategy 1: Direct watch page fetch with CONSENT cookie and Desktop/Mobile UA retry
+  // Strategy 1: Direct watch-page fetch (free, no proxy — most resilient to IP blocking issues)
   try {
     const items = await fetchTranscriptDirect(videoId, 'en');
     if (items && items.length > 0) {
@@ -202,9 +192,9 @@ async function fetchTranscriptItems(videoId: string): Promise<TranscriptItem[]> 
     console.warn(`[fetchTranscriptDirect] failed for ${videoId}:`, err?.message || err);
   }
 
-  // Strategy 2: youtube-caption-extractor with lang='en' and no-store cache
+  // Strategy 2: youtube-caption-extractor (InnerTube API across Android/iOS/mweb client profiles)
   try {
-    const subtitles = await getSubtitles({ videoID: videoId, lang: 'en', fetch: noCacheFetch });
+    const subtitles = await getSubtitles({ videoID: videoId, lang: 'en' });
     if (subtitles && subtitles.length > 0) {
       return subtitles.map((sub: { start: string; dur: string; text: string }) => ({
         text: sub.text,
@@ -213,24 +203,10 @@ async function fetchTranscriptItems(videoId: string): Promise<TranscriptItem[]> 
       }));
     }
   } catch (err: any) {
-    console.warn(`[youtube-caption-extractor lang=en] failed for ${videoId}:`, err?.message || err);
+    console.warn(`[youtube-caption-extractor] failed for ${videoId}:`, err?.message || err);
   }
 
-  // Strategy 3: youtube-caption-extractor default track (any language / auto-generated fallback)
-  try {
-    const subtitles = await getSubtitles({ videoID: videoId, fetch: noCacheFetch });
-    if (subtitles && subtitles.length > 0) {
-      return subtitles.map((sub: { start: string; dur: string; text: string }) => ({
-        text: sub.text,
-        offset: Math.floor(parseFloat(sub.start) * 1000),
-        duration: Math.floor(parseFloat(sub.dur) * 1000),
-      }));
-    }
-  } catch (err: any) {
-    console.warn(`[youtube-caption-extractor default] failed for ${videoId}:`, err?.message || err);
-  }
-
-  // Strategy 4: YoutubeTranscript fallback
+  // Strategy 3: YoutubeTranscript fallback
   try {
     const items = await YoutubeTranscript.fetchTranscript(videoId);
     if (items && items.length > 0) {
@@ -247,15 +223,21 @@ async function fetchTranscriptItems(videoId: string): Promise<TranscriptItem[]> 
   throw new Error('Captions unavailable for this video');
 }
 
-export async function parseYouTubeVideo(url: string, notebookId: string, sourceId: string, customTitle?: string) {
+export async function parseYouTubeVideo(
+  url: string,
+  notebookId: string,
+  sourceId: string,
+  customTitle?: string
+) {
   const videoId = extractYouTubeVideoId(url);
   if (!videoId) {
     throw new Error('Invalid YouTube URL format. Please provide a valid YouTube video link.');
   }
 
-  const videoTitle = customTitle && customTitle !== 'YOUTUBE Source'
-    ? customTitle
-    : await fetchYouTubeMetadata(videoId);
+  const videoTitle =
+    customTitle && customTitle !== 'YOUTUBE Source'
+      ? customTitle
+      : await fetchYouTubeMetadata(videoId);
 
   try {
     const transcriptItems = await fetchTranscriptItems(videoId);

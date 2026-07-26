@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { SourceParserFactory } from '@/lib/parsers';
-import { indexSourceChunks } from '@/lib/embeddings';
 import { SourceType } from '@/lib/types';
 import { uploadFileToS3 } from '@/lib/s3';
+import { enqueueIngestionJob } from '@/lib/queue/ingestion-queue';
 
 export const dynamic = 'force-dynamic';
 
@@ -131,59 +130,18 @@ export async function POST(req: Request) {
       }
     }
 
-    // Async Ingestion Processing
-    (async () => {
-      try {
-        await db.source.update({
-          where: { id: source.id },
-          data: { status: 'indexing' },
-        });
+    // Enqueue job for background processing with retries and concurrency control
+    const jobId = enqueueIngestionJob({
+      sourceId: source.id,
+      notebookId,
+      type,
+      title: source.title,
+      urlOrPath,
+      fileBuffer,
+      textContent,
+    });
 
-        let inputPayload: string | Buffer = urlOrPath || textContent;
-        if (fileBuffer) {
-          if (type === 'pdf') {
-            inputPayload = fileBuffer;
-          } else {
-            inputPayload = fileBuffer.toString('utf-8');
-          }
-        }
-
-        const parseResult = await SourceParserFactory.parseSource({
-          type,
-          notebookId,
-          sourceId: source.id,
-          title: source.title,
-          contentOrUrl: inputPayload,
-        });
-
-        if (!parseResult.chunks || parseResult.chunks.length === 0) {
-          throw new Error('No readable text content extracted from source');
-        }
-
-        // Index in Qdrant Cloud
-        await indexSourceChunks(parseResult.chunks);
-
-        // Update status to 'ready' and persist auto-extracted title into Neon DB
-        await db.source.update({
-          where: { id: source.id },
-          data: {
-            status: 'ready',
-            title: parseResult.title || source.title,
-          },
-        });
-      } catch (err: any) {
-        console.error(`Ingestion error for source ${source.id}:`, err);
-        await db.source.update({
-          where: { id: source.id },
-          data: {
-            status: 'error',
-            errorMessage: err.message || 'Failed to process and index source content',
-          },
-        });
-      }
-    })();
-
-    return NextResponse.json({ success: true, source }, { status: 202 });
+    return NextResponse.json({ success: true, source, jobId }, { status: 202 });
   } catch (error: any) {
     console.error('POST /api/ingest error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
