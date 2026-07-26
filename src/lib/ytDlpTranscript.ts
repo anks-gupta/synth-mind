@@ -73,7 +73,7 @@ export async function fetchTranscriptYtDlp(
     '--write-subs',
     '--write-auto-subs',
     '--sub-lang',
-    `${lang},en,en-US,en-GB,en.*`,
+    `${lang},en,en-US,en-GB,en-orig`,
     '--sub-format',
     'json3/vtt/best',
     '--no-warnings',

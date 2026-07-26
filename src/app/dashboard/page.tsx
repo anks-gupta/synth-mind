@@ -17,6 +17,7 @@ export default function DashboardPage() {
 
   const [isLoadingNotebooks, setIsLoadingNotebooks] = useState(true);
   const [isLoadingSources, setIsLoadingSources] = useState(false);
+  const [isMobileSourcesOpen, setIsMobileSourcesOpen] = useState(false);
 
   const [activeMode, setActiveMode] = useState<'chat' | 'roadmap' | 'podcast' | 'discoveries'>('chat');
   
@@ -382,6 +383,8 @@ export default function DashboardPage() {
         onCreateNotebook={handleCreateNotebook}
         onRenameNotebook={handleRenameNotebook}
         onDeleteNotebook={handleDeleteNotebook}
+        sourceCount={sources.length}
+        onToggleMobileSources={() => setIsMobileSourcesOpen((prev) => !prev)}
       />
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative min-h-0 h-[calc(100vh-4rem)]">
@@ -394,6 +397,8 @@ export default function DashboardPage() {
           onToggleSource={handleToggleSource}
           onAddSource={handleAddSource}
           onDeleteSource={handleDeleteSource}
+          isMobileOpen={isMobileSourcesOpen}
+          onCloseMobile={() => setIsMobileSourcesOpen(false)}
         />
 
         {/* Main Stage: Chat or Learning Mode */}

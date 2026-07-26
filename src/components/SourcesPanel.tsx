@@ -33,6 +33,8 @@ interface SourcesPanelProps {
   onToggleSource: (id: string) => void;
   onAddSource: (payload: { type: SourceType; title: string; contentOrUrl?: string; file?: File }) => void;
   onDeleteSource: (id: string) => void;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
 export function SourcesPanel({
@@ -43,6 +45,8 @@ export function SourcesPanel({
   onToggleSource,
   onAddSource,
   onDeleteSource,
+  isMobileOpen = false,
+  onCloseMobile,
 }: SourcesPanelProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [deletingSource, setDeletingSource] = useState<SourceItem | null>(null);
@@ -182,8 +186,8 @@ export function SourcesPanel({
 
   const allSelected = sources.length > 0 && activeSourceIds.length === sources.length;
 
-  return (
-    <aside className="w-full lg:w-80 border-r border-[#1e293b] bg-[#0f172a] flex flex-col h-full shrink-0 select-none overflow-hidden">
+  const panelContent = (
+    <aside className="w-80 max-w-[85vw] lg:max-w-none border-r border-[#1e293b] bg-[#0f172a] flex flex-col h-full shrink-0 select-none overflow-hidden">
       {/* Knowledge Vault Header */}
       <div className="p-4 border-b border-[#1e293b] flex items-center justify-between bg-[#070b12]/60">
         <div className="flex items-center space-x-2.5">
@@ -199,6 +203,16 @@ export function SourcesPanel({
             </span>
           </div>
         </div>
+
+        {onCloseMobile && (
+          <button
+            onClick={onCloseMobile}
+            className="lg:hidden text-slate-400 hover:text-white p-1 rounded-lg hover:bg-[#1e293b] transition-colors cursor-pointer"
+            title="Close Vault"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Active Workspace Info Card */}
@@ -643,5 +657,27 @@ export function SourcesPanel({
         </div>
       )}
     </aside>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:flex h-full shrink-0">
+        {panelContent}
+      </div>
+
+      {/* Mobile Drawer */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 z-50 flex lg:hidden">
+          <div
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm animate-in fade-in-0 duration-200"
+            onClick={onCloseMobile}
+          />
+          <div className="relative z-50 h-full animate-in slide-in-from-left-full duration-200">
+            {panelContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

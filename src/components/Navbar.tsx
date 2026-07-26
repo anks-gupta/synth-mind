@@ -15,6 +15,7 @@ import {
   Loader2,
   FolderPlus,
   AlertTriangle,
+  Database,
 } from 'lucide-react';
 import { UserButton } from '@clerk/nextjs';
 import { BrandLogo } from './BrandLogo';
@@ -29,6 +30,8 @@ interface NavbarProps {
   onCreateNotebook: (title: string, description?: string) => void;
   onRenameNotebook?: (id: string, title: string, description?: string) => void;
   onDeleteNotebook: (id: string) => void;
+  sourceCount?: number;
+  onToggleMobileSources?: () => void;
 }
 
 export function Navbar({
@@ -41,6 +44,8 @@ export function Navbar({
   onCreateNotebook,
   onRenameNotebook,
   onDeleteNotebook,
+  sourceCount = 0,
+  onToggleMobileSources,
 }: NavbarProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -176,6 +181,21 @@ export function Navbar({
               </div>
             )}
           </div>
+
+          {/* Mobile Knowledge Vault Trigger */}
+          {onToggleMobileSources && (
+            <button
+              onClick={onToggleMobileSources}
+              className="lg:hidden flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs font-bold transition-all cursor-pointer shrink-0"
+              title="Open Knowledge Vault"
+            >
+              <Database className="w-3.5 h-3.5 text-violet-400" />
+              <span className="hidden sm:inline">Vault</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-violet-500/20 text-[10px] text-violet-200 font-mono">
+                {sourceCount}
+              </span>
+            </button>
+          )}
         </div>
 
         {/* Center: Mode Switcher Header Tabs */}

@@ -38,7 +38,7 @@ export function SourceViewer({ citation, onClose }: SourceViewerProps) {
   const isExternalUrl = citation.urlOrPath && /^https?:\/\//i.test(citation.urlOrPath);
 
   return (
-    <div className="border-t border-[#1e2942] bg-[#0e1526] p-4 relative z-30 shadow-2xl animate-in slide-in-from-bottom-2 duration-200">
+    <div className="border-t border-[#1e2942] bg-[#0e1526] p-4 relative z-30 shadow-2xl animate-in slide-in-from-bottom-2 duration-200 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-3 border-b border-[#1e2942] pb-2">
         <div className="flex items-center space-x-2">
           {isYouTube ? (
