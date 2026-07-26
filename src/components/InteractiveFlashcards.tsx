@@ -253,19 +253,19 @@ export function InteractiveFlashcards({ cards, onSelectCitation }: InteractiveFl
       </div>
 
       {/* 4. Bottom Navigation Row */}
-      <div className="flex items-center justify-between gap-3 pt-2">
+      <div className="flex items-center justify-between gap-1.5 sm:gap-3 pt-2 w-full min-w-0">
         <button
           type="button"
           onClick={handlePrev}
           disabled={currentIndex === 0}
           aria-label="Previous card"
-          className="flex-1 sm:flex-initial px-4 py-2.5 rounded-2xl bg-[#111827] hover:bg-[#1f2937] border border-white/[0.08] text-[#F9FAFB] text-xs font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+          className="flex-1 sm:flex-initial px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl bg-[#111827] hover:bg-[#1f2937] border border-white/[0.08] text-[#F9FAFB] text-xs font-bold transition-all flex items-center justify-center space-x-1 sm:space-x-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-sm min-w-0 shrink"
         >
-          <ChevronLeft className="w-4 h-4 text-[#9CA3AF]" />
-          <span>Previous</span>
+          <ChevronLeft className="w-4 h-4 text-[#9CA3AF] shrink-0" />
+          <span className="truncate">Previous</span>
         </button>
 
-        <div className="text-xs font-mono font-bold text-[#F9FAFB] px-3 py-1.5 rounded-xl bg-[#111827] border border-white/[0.06] shadow-inner shrink-0">
+        <div className="text-xs font-mono font-bold text-[#F9FAFB] px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#111827] border border-white/[0.06] shadow-inner shrink-0 select-none">
           {currentIndex + 1} / {totalCards}
         </div>
 
@@ -273,10 +273,10 @@ export function InteractiveFlashcards({ cards, onSelectCitation }: InteractiveFl
           type="button"
           onClick={handleNext}
           aria-label="Next card"
-          className="flex-1 sm:flex-initial px-5 py-2.5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40"
+          className="flex-1 sm:flex-initial px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold transition-all flex items-center justify-center space-x-1 sm:space-x-2 cursor-pointer shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 min-w-0 shrink"
         >
-          <span>Next</span>
-          <ChevronRight className="w-4 h-4" />
+          <span className="truncate">Next</span>
+          <ChevronRight className="w-4 h-4 shrink-0" />
         </button>
       </div>
 
