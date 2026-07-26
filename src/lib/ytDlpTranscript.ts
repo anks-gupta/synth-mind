@@ -77,6 +77,8 @@ export async function fetchTranscriptYtDlp(
     '--sub-format',
     'json3/vtt/best',
     '--no-warnings',
+    '--extractor-args',
+    'youtube:player_client=android,web',
     '-o',
     outputPrefix,
   ];
