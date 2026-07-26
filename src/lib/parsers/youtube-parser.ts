@@ -8,7 +8,7 @@ export { checkYtDlpAvailable, extractYouTubeVideoId };
 
 // Perform startup environment check for yt-dlp & YT_COOKIES_PATH
 if (typeof process !== 'undefined' && process.env) {
-  checkYtDlpAvailable().catch(() => {});
+  checkYtDlpAvailable().catch(() => { });
 }
 
 export async function fetchYouTubeMetadata(videoId: string): Promise<string> {
@@ -39,39 +39,28 @@ function decodeHTMLEntities(text: string): string {
     .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
 }
 
+// Brace-counting extraction only. This is strictly more robust than a regex
+// fallback would be, so if it fails there's a different underlying bug worth
+// surfacing directly, rather than masking it with a second parsing path.
 function extractInlineJson(html: string, globalName: string): any {
   const token = `${globalName} = `;
   const idx = html.indexOf(token);
-  if (idx !== -1) {
-    const start = idx + token.length;
-    let depth = 0;
-    for (let i = start; i < html.length; i++) {
-      if (html[i] === '{') depth++;
-      else if (html[i] === '}') {
-        depth--;
-        if (depth === 0) {
-          try {
-            return JSON.parse(html.slice(start, i + 1));
-          } catch (e) { }
+  if (idx === -1) return null;
+
+  const start = idx + token.length;
+  let depth = 0;
+  for (let i = start; i < html.length; i++) {
+    if (html[i] === '{') depth++;
+    else if (html[i] === '}') {
+      depth--;
+      if (depth === 0) {
+        try {
+          return JSON.parse(html.slice(start, i + 1));
+        } catch (e) {
+          return null;
         }
       }
     }
-  }
-
-  const regex = new RegExp(`${globalName}\\s*=\\s*({.+?})\\s*;\\s*(?:var|const|let|\\n)`, 's');
-  const match = html.match(regex);
-  if (match) {
-    try {
-      return JSON.parse(match[1]);
-    } catch (e) { }
-  }
-
-  const tracksMatch = html.match(/"captionTracks":\s*(\[.*?\])/);
-  if (tracksMatch) {
-    try {
-      const tracks = JSON.parse(tracksMatch[1]);
-      return { captions: { playerCaptionsTracklistRenderer: { captionTracks: tracks } } };
-    } catch (e) { }
   }
 
   return null;
@@ -79,8 +68,6 @@ function extractInlineJson(html: string, globalName: string): any {
 
 const DESKTOP_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
-const MOBILE_UA =
-  'Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36';
 
 async function fetchWatchPageAndTracks(
   videoId: string,
@@ -101,7 +88,8 @@ async function fetchWatchPageAndTracks(
 
   const html = await res.text();
 
-  // Bot/consent detection markers — bail early with a clear signal to retry with a different UA
+  // Bot/consent detection markers — bail early with a clear, specific error
+  // instead of letting a later JSON.parse fail on an interstitial page
   if (html.includes('action="https://consent.youtube.com') || html.includes('id="captcha-form"')) {
     throw new Error('Blocked by consent/captcha interstitial');
   }
@@ -163,46 +151,42 @@ async function fetchDirectAttempt(
   return items.length > 0 ? items : null;
 }
 
+// Single attempt, desktop UA only — a mobile-UA retry was removed here since
+// logs showed it hitting the exact same "Sign in to confirm you're not a bot"
+// wall as desktop. The block is based on request/session fingerprinting, not
+// User-Agent, so retrying with a different UA only added a wasted round-trip.
 export async function fetchTranscriptDirect(
   videoId: string,
   lang: string = 'en'
 ): Promise<TranscriptItem[]> {
-  try {
-    const result = await fetchDirectAttempt(videoId, lang, DESKTOP_UA);
-    if (result) return result;
-  } catch (err: any) {
-    console.warn(`[fetchTranscriptDirect] desktop UA attempt failed for ${videoId}:`, err?.message || err);
+  const result = await fetchDirectAttempt(videoId, lang, DESKTOP_UA);
+  if (!result) {
+    throw new Error('Direct fetch found no usable captions');
   }
-
-  try {
-    const result = await fetchDirectAttempt(videoId, lang, MOBILE_UA);
-    if (result) return result;
-  } catch (err: any) {
-    console.warn(`[fetchTranscriptDirect] mobile UA attempt failed for ${videoId}:`, err?.message || err);
-  }
-
-  throw new Error('Direct fetch found no usable captions');
+  return result;
 }
 
 async function fetchTranscriptItems(videoId: string): Promise<TranscriptItem[]> {
-  // Strategy 0: yt-dlp authenticated subprocess with cookies.txt (handles LOGIN_REQUIRED / bot protection)
+  // Strategy 0: yt-dlp authenticated subprocess with cookies.txt + POT provider
+  // (handles LOGIN_REQUIRED / bot protection). This should succeed almost all
+  // the time; everything below is fallback insurance.
   try {
     const items = await fetchTranscriptYtDlp(videoId, 'en');
     if (items && items.length > 0) {
       return items;
     }
   } catch (err: any) {
-    console.warn(`[fetchTranscriptYtDlp] failed for ${videoId}:`, err?.message || err);
+    console.warn(`[Strategy 0: yt-dlp] failed for ${videoId}:`, err?.message || err);
   }
 
-  // Strategy 1: Direct watch-page fetch (free, no proxy — most resilient to IP blocking issues)
+  // Strategy 1: Direct watch-page fetch (free, no proxy)
   try {
     const items = await fetchTranscriptDirect(videoId, 'en');
     if (items && items.length > 0) {
       return items;
     }
   } catch (err: any) {
-    console.warn(`[fetchTranscriptDirect] failed for ${videoId}:`, err?.message || err);
+    console.warn(`[Strategy 1: direct fetch] failed for ${videoId}:`, err?.message || err);
   }
 
   // Strategy 2: youtube-caption-extractor (InnerTube API across Android/iOS/mweb client profiles)
@@ -216,7 +200,7 @@ async function fetchTranscriptItems(videoId: string): Promise<TranscriptItem[]> 
       }));
     }
   } catch (err: any) {
-    console.warn(`[youtube-caption-extractor] failed for ${videoId}:`, err?.message || err);
+    console.warn(`[Strategy 2: youtube-caption-extractor] failed for ${videoId}:`, err?.message || err);
   }
 
   // Strategy 3: YoutubeTranscript fallback
@@ -230,7 +214,7 @@ async function fetchTranscriptItems(videoId: string): Promise<TranscriptItem[]> 
       }));
     }
   } catch (err: any) {
-    console.warn(`[YoutubeTranscript] failed for ${videoId}:`, err?.message || err);
+    console.warn(`[Strategy 3: YoutubeTranscript] failed for ${videoId}:`, err?.message || err);
   }
 
   throw new Error('Captions unavailable for this video');

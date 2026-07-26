@@ -26,7 +26,9 @@ function decodeHTMLEntities(text: string): string {
 
 /**
  * Checks if yt-dlp binary is available on PATH and if process.env.YT_COOKIES_PATH exists.
- * Logs a clear warning (not a crash) if either is missing.
+ * Also runs a lightweight diagnostic on the cookies file itself (format + presence of
+ * key auth cookies) WITHOUT logging any actual cookie values.
+ * Logs clear warnings (not a crash) if anything is missing or looks wrong.
  */
 export async function checkYtDlpAvailable(): Promise<boolean> {
   let hasBinary = false;
@@ -49,13 +51,41 @@ export async function checkYtDlpAvailable(): Promise<boolean> {
   } else {
     console.log(`[yt-dlp] Verified cookies file at "${cookiesPath}"`);
     hasCookies = true;
+
+    try {
+      const content = fs.readFileSync(cookiesPath, 'utf8');
+      const firstLine = content.split('\n')[0]?.trim() ?? '';
+
+      if (!firstLine.startsWith('# Netscape HTTP Cookie File')) {
+        console.warn(
+          `[yt-dlp] WARNING: cookies.txt does not start with the Netscape header. ` +
+          `First line was: "${firstLine.slice(0, 40)}". This usually means the file was ` +
+          `exported as JSON instead of Netscape format — yt-dlp silently ignores it in that case.`
+        );
+      } else {
+        console.log('[yt-dlp] Cookies file has a valid Netscape header.');
+      }
+
+      const lines = content.split('\n').filter((l) => l.trim() && !l.startsWith('#'));
+      const requiredCookieNames = ['SID', 'HSID', 'SSID', 'APISID', 'SAPISID', 'LOGIN_INFO'];
+      const foundNames = new Set(lines.map((l) => l.split('\t')[5]).filter(Boolean));
+      const missing = requiredCookieNames.filter((n) => !foundNames.has(n));
+
+      console.log(
+        `[yt-dlp] Cookie entries found: ${lines.length}. Missing key auth cookies: ${missing.length ? missing.join(', ') : 'none'
+        }`
+      );
+    } catch (diagErr: any) {
+      console.warn('[yt-dlp] Could not run cookies diagnostic:', diagErr?.message || diagErr);
+    }
   }
 
   return hasBinary && hasCookies;
 }
 
 /**
- * Shells out to yt-dlp with authenticated cookies to retrieve subtitles.
+ * Shells out to yt-dlp with authenticated cookies + the BgUtils POT provider
+ * (running as a background service, see Dockerfile/start.sh) to retrieve subtitles.
  */
 export async function fetchTranscriptYtDlp(
   videoId: string,
@@ -67,6 +97,17 @@ export async function fetchTranscriptYtDlp(
 
   const cookiesPath = process.env.YT_COOKIES_PATH;
 
+  // Copy the read-only secret file to a writable temp location. yt-dlp writes
+  // back to the cookies file after every run (to persist rotated session
+  // cookies like SIDCC), and Render's Secret Files are mounted read-only —
+  // pointing yt-dlp directly at the original path crashes it on exit with
+  // "OSError: [Errno 30] Read-only file system".
+  let writableCookiesPath: string | undefined;
+  if (cookiesPath && fs.existsSync(cookiesPath)) {
+    writableCookiesPath = path.join(tmpDir, `cookies_${videoId}_${Date.now()}.txt`);
+    fs.copyFileSync(cookiesPath, writableCookiesPath);
+  }
+
   const args: string[] = [
     url,
     '--skip-download',
@@ -77,15 +118,19 @@ export async function fetchTranscriptYtDlp(
     '--sub-format',
     'json3/vtt/best',
     '--no-warnings',
+    // Restricted to the web client only — this is the client our cookies
+    // actually authenticate. Mixing in android/ios clients here doesn't help
+    // (they use a different, cookie-independent auth mechanism) and can
+    // produce confusing, differently-shaped failures.
     '--extractor-args',
-    'youtube:player_client=android,web',
-    '-o',
-    outputPrefix,
+    'youtube:player_client=web',
   ];
 
-  if (cookiesPath && fs.existsSync(cookiesPath)) {
-    args.push('--cookies', cookiesPath);
+  if (writableCookiesPath) {
+    args.push('--cookies', writableCookiesPath);
   }
+
+  args.push('-o', outputPrefix);
 
   try {
     await execFileAsync('yt-dlp', args, { timeout: 25000 });
@@ -161,13 +206,6 @@ export async function fetchTranscriptYtDlp(
       }
     }
 
-    // Clean up temporary files
-    for (const f of files) {
-      try {
-        fs.unlinkSync(path.join(tmpDir, f));
-      } catch {}
-    }
-
     if (items.length === 0) {
       throw new Error('No valid transcript items parsed from yt-dlp output');
     }
@@ -175,13 +213,19 @@ export async function fetchTranscriptYtDlp(
     return items;
   } catch (err: any) {
     const details = (err?.stderr || err?.stdout || err?.message || String(err)).trim();
-    // Cleanup temporary files on error
+    throw new Error(`yt-dlp transcript fetch failed: ${details}`);
+  } finally {
+    // Clean up temp subtitle files
     try {
       const files = fs.readdirSync(tmpDir).filter((f) => f.startsWith(path.basename(outputPrefix)));
       for (const f of files) {
-        fs.unlinkSync(path.join(tmpDir, f));
+        try { fs.unlinkSync(path.join(tmpDir, f)); } catch { }
       }
-    } catch {}
-    throw new Error(`yt-dlp transcript fetch failed: ${details}`);
+    } catch { }
+
+    // Clean up the writable cookies copy
+    if (writableCookiesPath) {
+      try { fs.unlinkSync(writableCookiesPath); } catch { }
+    }
   }
 }

@@ -115,11 +115,10 @@ export function InteractiveFlashcards({ cards, onSelectCitation }: InteractiveFl
           type="button"
           onClick={() => toggleMastered(currentCard.id)}
           aria-label={isMastered ? 'Card mastered' : 'Mark card as mastered'}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center space-x-2 border shrink-0 cursor-pointer shadow-sm ${
-            isMastered
+          className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center space-x-2 border shrink-0 cursor-pointer shadow-sm ${isMastered
               ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
               : 'bg-[#111827] text-[#9CA3AF] border-white/[0.08] hover:text-[#F9FAFB] hover:border-violet-500/40'
-          }`}
+            }`}
         >
           <CheckCircle2 className={`w-4 h-4 ${isMastered ? 'text-emerald-400' : 'text-[#9CA3AF]'}`} />
           <span>{isMastered ? 'Mastered' : 'Mark Mastered'}</span>
@@ -146,9 +145,8 @@ export function InteractiveFlashcards({ cards, onSelectCitation }: InteractiveFl
         className="w-full cursor-pointer perspective-1000 group relative min-h-[320px] sm:min-h-[380px]"
       >
         <div
-          className={`w-full h-full min-h-[320px] sm:min-h-[380px] duration-500 transform-style-3d transition-all ${
-            isFlipped ? 'rotate-y-180' : ''
-          }`}
+          className={`w-full h-full min-h-[320px] sm:min-h-[380px] duration-500 transform-style-3d transition-all ${isFlipped ? 'rotate-y-180' : ''
+            }`}
         >
           {/* FRONT SIDE (Question) */}
           <div className="w-full h-full min-h-[320px] sm:min-h-[380px] rounded-2xl sm:rounded-3xl bg-[#111827] border border-white/[0.08] p-4 sm:p-6 md:p-8 flex flex-col justify-between backface-hidden shadow-[0_0_30px_rgba(139,92,246,0.08)] group-hover:border-violet-500/50 group-hover:shadow-[0_0_40px_rgba(139,92,246,0.2)] group-hover:-translate-y-1 transition-all duration-300 space-y-4 sm:space-y-6">
@@ -253,19 +251,19 @@ export function InteractiveFlashcards({ cards, onSelectCitation }: InteractiveFl
       </div>
 
       {/* 4. Bottom Navigation Row */}
-      <div className="flex items-center justify-between gap-1.5 sm:gap-3 pt-2 w-full min-w-0">
+      <div className="flex items-center justify-between gap-3 pt-2">
         <button
           type="button"
           onClick={handlePrev}
           disabled={currentIndex === 0}
           aria-label="Previous card"
-          className="flex-1 sm:flex-initial px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl bg-[#111827] hover:bg-[#1f2937] border border-white/[0.08] text-[#F9FAFB] text-xs font-bold transition-all flex items-center justify-center space-x-1 sm:space-x-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-sm min-w-0 shrink"
+          className="flex-1 sm:flex-initial px-4 py-2.5 rounded-2xl bg-[#111827] hover:bg-[#1f2937] border border-white/[0.08] text-[#F9FAFB] text-xs font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
         >
-          <ChevronLeft className="w-4 h-4 text-[#9CA3AF] shrink-0" />
-          <span className="truncate">Previous</span>
+          <ChevronLeft className="w-4 h-4 text-[#9CA3AF]" />
+          <span>Previous</span>
         </button>
 
-        <div className="text-xs font-mono font-bold text-[#F9FAFB] px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#111827] border border-white/[0.06] shadow-inner shrink-0 select-none">
+        <div className="text-xs font-mono font-bold text-[#F9FAFB] px-3 py-1.5 rounded-xl bg-[#111827] border border-white/[0.06] shadow-inner shrink-0">
           {currentIndex + 1} / {totalCards}
         </div>
 
@@ -273,10 +271,10 @@ export function InteractiveFlashcards({ cards, onSelectCitation }: InteractiveFl
           type="button"
           onClick={handleNext}
           aria-label="Next card"
-          className="flex-1 sm:flex-initial px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold transition-all flex items-center justify-center space-x-1 sm:space-x-2 cursor-pointer shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 min-w-0 shrink"
+          className="flex-1 sm:flex-initial px-5 py-2.5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40"
         >
-          <span className="truncate">Next</span>
-          <ChevronRight className="w-4 h-4 shrink-0" />
+          <span>Next</span>
+          <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 
