@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Citation } from '@/lib/types';
 import { X, Video, FileText, Globe, Play, ExternalLink, MessageSquareText, Loader2 } from 'lucide-react';
-import { extractYouTubeVideoId } from '@/lib/parsers/youtube-parser';
-import { formatSeconds } from '@/lib/utils';
+import { extractYouTubeVideoId, formatSeconds } from '@/lib/utils';
 
 interface SourceViewerProps {
   citation: Citation | null;

@@ -151,6 +151,9 @@ QDRANT_API_KEY="your-qdrant-api-key"
 # OpenAI API Key
 OPENAI_API_KEY="sk-..."
 
+# YouTube Transcript Authenticated Cookies (Optional - for bot/LOGIN_REQUIRED protection)
+YT_COOKIES_PATH="/etc/secrets/cookies.txt"
+
 # AWS S3 (Optional Object Storage)
 AWS_REGION="ap-south-1"
 AWS_ACCESS_KEY_ID="your-access-key-id"
@@ -187,3 +190,14 @@ To verify production bundle compilation:
 ```bash
 npm run build
 ```
+
+---
+
+## 🚀 Deploying to Render (Docker Web Service)
+
+1. **Connect Repo**: Create a new **Web Service** on Render and connect your GitHub repository.
+2. **Environment**: Choose **Docker** as the runtime environment. Render will automatically use the root `Dockerfile`.
+3. **Environment Variables**: Add your `.env` variables (`DATABASE_URL`, `QDRANT_URL`, `QDRANT_API_KEY`, `OPENAI_API_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`).
+4. **Attach Cookies File (Secret Files)**:
+   - In Render Dashboard under **Secret Files**, create a secret file named `cookies.txt` containing your Netscape-formatted YouTube cookies.
+   - Set Environment Variable: `YT_COOKIES_PATH=/etc/secrets/cookies.txt`.

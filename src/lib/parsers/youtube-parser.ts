@@ -1,11 +1,14 @@
 import { getSubtitles } from 'youtube-caption-extractor';
 import { YoutubeTranscript } from 'youtube-transcript';
 import { ChunkMetadata } from '../types';
+import { extractYouTubeVideoId } from '../utils';
+import { fetchTranscriptYtDlp, checkYtDlpAvailable } from '../ytDlpTranscript';
 
-export function extractYouTubeVideoId(url: string): string | null {
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = url.match(regExp);
-  return match && match[2].length === 11 ? match[2] : null;
+export { checkYtDlpAvailable, extractYouTubeVideoId };
+
+// Perform startup environment check for yt-dlp & YT_COOKIES_PATH
+if (typeof process !== 'undefined' && process.env) {
+  checkYtDlpAvailable().catch(() => {});
 }
 
 export async function fetchYouTubeMetadata(videoId: string): Promise<string> {
@@ -182,6 +185,16 @@ export async function fetchTranscriptDirect(
 }
 
 async function fetchTranscriptItems(videoId: string): Promise<TranscriptItem[]> {
+  // Strategy 0: yt-dlp authenticated subprocess with cookies.txt (handles LOGIN_REQUIRED / bot protection)
+  try {
+    const items = await fetchTranscriptYtDlp(videoId, 'en');
+    if (items && items.length > 0) {
+      return items;
+    }
+  } catch (err: any) {
+    console.warn(`[fetchTranscriptYtDlp] failed for ${videoId}:`, err?.message || err);
+  }
+
   // Strategy 1: Direct watch-page fetch (free, no proxy — most resilient to IP blocking issues)
   try {
     const items = await fetchTranscriptDirect(videoId, 'en');
