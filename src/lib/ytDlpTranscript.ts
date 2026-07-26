@@ -73,11 +73,10 @@ export async function fetchTranscriptYtDlp(
     '--write-subs',
     '--write-auto-subs',
     '--sub-lang',
-    `${lang},en,en-US,en-GB,.*`,
+    `${lang},en,en-US,en-GB,en.*`,
     '--sub-format',
     'json3/vtt/best',
-    '--js-runtimes',
-    'node',
+    '--no-warnings',
     '-o',
     outputPrefix,
   ];
@@ -173,6 +172,7 @@ export async function fetchTranscriptYtDlp(
 
     return items;
   } catch (err: any) {
+    const details = (err?.stderr || err?.stdout || err?.message || String(err)).trim();
     // Cleanup temporary files on error
     try {
       const files = fs.readdirSync(tmpDir).filter((f) => f.startsWith(path.basename(outputPrefix)));
@@ -180,6 +180,6 @@ export async function fetchTranscriptYtDlp(
         fs.unlinkSync(path.join(tmpDir, f));
       }
     } catch {}
-    throw new Error(`yt-dlp transcript fetch failed: ${err?.message || err}`);
+    throw new Error(`yt-dlp transcript fetch failed: ${details}`);
   }
 }
