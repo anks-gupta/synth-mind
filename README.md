@@ -13,7 +13,7 @@ When a citation is clicked, SynthMind's **Deep-Linked Source Viewer** automatica
 1. 📚 **Multi-Notebook Workspace Management:** Isolated knowledge bases per notebook with scoped loading, workspace skeletons, and Neon Postgres DB persistence.
 2. 📥 **5-in-1 Source Ingestion Engine & 4-Tier YouTube Caption Extractor:**
    - 📄 **PDF Documents:** Extracts text & page numbers.
-   - 🎥 **YouTube Videos (4-Tier Resilient Caption Extraction):** Combines direct watch-page requests (with `CONSENT` cookies to bypass Vercel/Render datacenter IP blocking), mobile/desktop User-Agent fallbacks, `youtube-caption-extractor` (iOS/Android InnerTube profiles), and `youtube-transcript`.
+   - 🎥 **YouTube Videos (4-Tier Resilient Caption Extraction):** Combines direct watch-page requests (with `CONSENT` cookies to bypass Vercel/Render datacenter IP blocking), mobile/desktop User-Agent fallbacks, `youtube-caption-extractor` (iOS/Android InnerTube profiles), and `youtube-transcript`. NOTE: This working fine on localhost but no on server because of BOT protection, will implement another solution later.
    - 🌐 **Web URL Scraper:** Clean HTML body extraction via Cheerio with deep text fragment anchors.
    - ⏱️ **VTT Transcripts:** Parses timestamped subtitle files.
    - 📝 **Plain Text / MD:** Normalizes raw text notes.
